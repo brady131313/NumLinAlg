@@ -1,7 +1,17 @@
 import matrix
 
+data1 = [[1, 1, 1],
+        [2, 2, 2],
+        [3, 3, 3],
+        [4, 4, 4]]
 
-v1 = matrix.Vector(6, [1, 1, 1, 1, 1, 1])
-v2 = matrix.Vector(5, [2, 2, 2, 2, 2])
+data2 = [[2, 2, 2, 2],
+         [3, 3, 3, 3],
+         [4, 4, 4, 4]]
 
-print(v1)
+d1 = matrix.Dense(4, 3, data1)
+d2 = matrix.Dense(3, 4, data2)
+
+print(d1)
+print(d2)
+print(d1.multMat(d2))
