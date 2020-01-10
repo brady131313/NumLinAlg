@@ -150,8 +150,129 @@ class Dense(_Matrix):
 
 
 class Sparse(_Matrix):
-    def __init__(self, rows, columns):
+    def __init__(self, rows, columns, data = None, colInd = None, rowPtr = None):
         super().__init__(rows, columns)
 
-    def print(self):
-        print(self.rows, "x", self.columns, " sparse", sep='')
+        if data and (not colInd or not rowPtr):
+            raise Exception("Missing matching colInd and rowPtr for data")
+        elif data and colInd and rowPtr:
+            self.data = data
+            self.colInd = colInd
+            self.rowPtr = rowPtr
+        elif not data and colInd and rowPtr:
+            self.data = [1] * len(colInd)
+            self.colInd = colInd
+            self.rowPtr = rowPtr
+        else:
+            self.data = []
+            self.colInd = []
+            self.rowPtr = []
+
+    def scale(self, scalar):
+        data = [0.0] * len(self.data)
+
+        for i in range(len(self.data)):
+            data[i] = scalar * self.data[i]
+
+        return Sparse(self.rows, self.columns, data, self.colInd, self.rowPtr)
+
+    def transpose(self):
+        pass
+
+    def multMat(self, other):
+        n = self.rows
+        m = other.columns
+        rowPtr = self.genShape(other)
+        colInd = [0] * rowPtr[n]
+        data = [0.0] * rowPtr[n]
+        localToGlobal = [0] * m
+        globalToLocal = [-1] * m
+
+        for i in range(self.rows):
+            localCounter = 0
+
+            for p in range(self.rowPtr[i], self.rowPtr[i + 1]):
+                k = self.colInd[p]
+
+                for q in range(other.rowPtr[k], other.rowPtr[k + 1]):
+                    j = other.colInd[q]
+                    #Still not sure how to calculate the correct data value
+                    data[rowPtr[i] + localCounter] += self.data[k] * other.data[j]
+                    
+                    if (globalToLocal[j] < 0):
+                        #Column indicies are sometimes out of order
+                        colInd[rowPtr[i] + localCounter] = j
+                        globalToLocal[j] = localCounter
+                        localToGlobal[localCounter] = j
+                        localCounter += 1
+                                        
+            for counter in range(localCounter):
+                globalToLocal[localToGlobal[counter]] = -1
+
+        print(data)
+        print(colInd)
+        print(rowPtr)
+        return Sparse(n, m, data, colInd, rowPtr)
+
+    def genShape(self, other):
+        n = self.rows
+        m = other.columns
+        localToGlobal = [0] * m
+        globalToLocal = [-1] * m
+        rowPtr = [0] * (n + 1)
+        
+        for i in range(self.rows):
+            localCounter = 0
+
+            for p in range(self.rowPtr[i], self.rowPtr[i + 1]):
+                k = self.colInd[p]
+
+                for q in range(other.rowPtr[k], other.rowPtr[k + 1]):
+                    j = other.colInd[q]
+
+                    if globalToLocal[j] < 0:
+                        globalToLocal[j] = localCounter
+                        localToGlobal[localCounter] = j
+                        localCounter += 1
+            
+            rowPtr[i + 1] = rowPtr[i] + localCounter
+            for counter in range(localCounter):
+                globalToLocal[localToGlobal[counter]] = -1
+        
+        return rowPtr
+
+    def multVec(self, other):
+        if self.columns != other.dim:
+            raise Exception(f"Dimension mismatch: {self.rows}x{self.columns} * {other.dim}x1")
+
+        data = [0.0] * self.rows
+        for i in range(self.rows):
+            for k in range(self.rowPtr[i], self.rowPtr[i + 1]):
+                j = self.colInd[k]
+                data[i] += self.data[k] * other.data[j]
+
+        return Vector(self.rows, data)
+
+    def getValue(self, row, column):
+        if len(self.data) == 0:
+            return 0
+
+        search = self.colInd[self.rowPtr[row]:self.rowPtr[row + 1]]
+        try:
+            k = search.index(column)
+        except ValueError:
+            return 0
+
+        if self.data:
+            return self.data[self.rowPtr[row] + k]
+        else:
+            return 1
+
+    def __str__(self):
+        str = f"{self.rows}x{self.columns} Sparse"
+        for i in range(self.rows):
+            str += "\n"
+            for j in range(self.columns):
+                str += f"{self.getValue(i, j)} "
+
+        return str
