@@ -94,6 +94,32 @@ class Dense(_Matrix):
             self.data = data
         else:
             self.data = [[0.0] * self.columns for i in range(self.rows)]
+    
+    @classmethod
+    def fromFile(cls, file):
+        entry = []
+        binary = False
+        checked = False
+
+        next(file)
+        info = next(file).split()
+        rows, columns, = int(info[0]), int(info[1])
+
+        data = [[0] * columns for i in range(rows)]
+
+        for line in file:
+            entry = line.split()
+            if not checked:
+                checked = True
+                if len(entry) == 2:
+                    binary = True
+            
+            if binary:
+                data[int(entry[0]) - 1][int(entry[1]) - 1] = 1
+            else:
+                data[int(entry[0]) - 1][int(entry[1]) - 1] = float(entry[2])
+        
+        return cls(rows, columns, data)
 
     def scale(self, scalar):
         data = [[0.0] * self.columns for i in range(self.rows)]
@@ -167,6 +193,61 @@ class Sparse(_Matrix):
             self.data = []
             self.colInd = []
             self.rowPtr = []
+
+    @classmethod
+    def fromFile(cls, file):
+        data = []
+        colInd = []
+        rowPtr = [0]
+        nnz = 0
+        entries = []
+        binary = False
+
+        next(file)
+
+        info = next(file).split()
+        rows, columns = int(info[0]), int(info[1])
+
+        for line in file:
+            entries.append(line.split())
+        entries.sort(key=lambda tup: int(tup[0]))
+
+        if len(entries[0]) == 2:
+            binary = True
+
+        last = 0
+        for entry in entries:
+            if binary:
+                data.append(1)
+            else:
+                data.append(float(entry[2]))
+            colInd.append(int(entry[1]) - 1)
+            if last != (int(entry[0]) - 1):
+                rowPtr.append(nnz)
+
+            nnz += 1
+            last = int(entry[0]) - 1
+
+        rowPtr.append(nnz)
+
+        return cls(rows, columns, data, colInd, rowPtr)
+    
+    @classmethod
+    def fromDense(cls, dense):
+        data = []
+        colInd = []
+        rowPtr = [0]
+        nnz = 0
+
+        for i in range(dense.rows):
+            for j in range(dense.columns):
+                if dense.data[i][j] != 0:
+                    data.append(dense.data[i][j])
+                    colInd.append(j)
+                    nnz += 1
+            rowPtr.append(nnz)
+
+        return cls(dense.rows, dense.columns, data, colInd, rowPtr)
 
     def scale(self, scalar):
         data = [0.0] * len(self.data)

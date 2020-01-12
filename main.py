@@ -1,17 +1,28 @@
+import os
+import time
+
 import matrix
 
-data = [1, 3, 2]
-colInd = [0, 1, 0]
-rowPtr = [0, 1, 2, 2, 3]
+def getMatrixFile(name):
+    scriptDir = os.path.dirname(__file__)
+    relDir = "samples/" + name
+    filePath = os.path.join(scriptDir, relDir)
+    return filePath
 
-data2 = [1, 1, 3]
-colInd2 = [0, 1, 2]
-rowPtr2 = [0, 2, 3]
 
-s1 = matrix.Sparse(4, 2, data, colInd, rowPtr)
-#s2 = matrix.Sparse(2, 3, data2, colInd2, rowPtr2)
 
-print(s1)
-print(s1.transpose())
-#print(s2)
-#print(s1.multMat(s2))
+def main():
+    with open(getMatrixFile("s3dkq4m2.mtx")) as file:
+        A = matrix.Sparse.fromFile(file)
+
+    start = time.time()
+
+    R = A.multMat(A)
+
+    end = time.time()
+    #print(R)
+    print(f"Total operation time: {end - start}")
+
+
+
+main()
