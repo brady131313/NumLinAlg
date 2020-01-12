@@ -177,7 +177,38 @@ class Sparse(_Matrix):
         return Sparse(self.rows, self.columns, data, self.colInd, self.rowPtr)
 
     def transpose(self):
-        pass
+        nnz = self.rowPtr[self.rows]
+        colPtr = [0] * (self.columns + 1)
+        rowInd = [0] * nnz
+        data = [0] * nnz
+
+        for i in range(nnz):
+            colPtr[self.colInd[i]] += 1
+
+        sum = 0
+        for i in range(self.columns):
+            temp = colPtr[i]
+            colPtr[i] = sum
+            sum += temp
+        colPtr[self.columns] = nnz
+
+        for i in range(self.rows):
+            for j in range(self.rowPtr[i], self.rowPtr[i + 1]):
+                col = self.colInd[j]
+                dest = colPtr[col]
+
+                rowInd[dest] = i
+                data[dest] = self.data[j]
+
+                colPtr[col] += 1
+        
+        last = 0
+        for i in range(self.columns + 1):
+            temp = colPtr[i]
+            colPtr[i] = last
+            last = temp
+
+        return Sparse(self.columns, self.rows, data, rowInd, colPtr)
 
     def multMat(self, other):
         n = self.rows
