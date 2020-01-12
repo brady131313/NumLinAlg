@@ -1,15 +1,15 @@
 import matrix
 
-data = [3, 1, 2, 4]
-colInd = [0, 0, 2, 1]
-rowPtr = [0, 1, 3, 4]
+data = [1, 3, 2]
+colInd = [0, 1, 0]
+rowPtr = [0, 1, 2, 2, 3]
 
-data2 = [2, 1, 3, 1]
-colInd2 = [1, 1, 0, 2]
-rowPtr2 = [0, 1, 2, 4]
+data2 = [1, 1, 3]
+colInd2 = [0, 1, 2]
+rowPtr2 = [0, 2, 3]
 
-s1 = matrix.Sparse(3, 3, data, colInd, rowPtr)
-s2 = matrix.Sparse(3, 3, data2, colInd2, rowPtr2)
+s1 = matrix.Sparse(4, 2, data, colInd, rowPtr)
+s2 = matrix.Sparse(2, 3, data2, colInd2, rowPtr2)
 
 print(s1)
 print(s2)

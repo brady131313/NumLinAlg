@@ -185,33 +185,41 @@ class Sparse(_Matrix):
         rowPtr = self.genShape(other)
         colInd = [0] * rowPtr[n]
         data = [0.0] * rowPtr[n]
+        nnz = 0
         localToGlobal = [0] * m
         globalToLocal = [-1] * m
 
         for i in range(self.rows):
             localCounter = 0
+            head = -2
 
             for p in range(self.rowPtr[i], self.rowPtr[i + 1]):
                 k = self.colInd[p]
+                v = self.data[p]
 
                 for q in range(other.rowPtr[k], other.rowPtr[k + 1]):
                     j = other.colInd[q]
-                    #Still not sure how to calculate the correct data value
-                    data[rowPtr[i] + localCounter] += self.data[k] * other.data[j]
+
+                    localToGlobal[j] += v * other.data[q]
                     
                     if (globalToLocal[j] < 0):
-                        #Column indicies are sometimes out of order
-                        colInd[rowPtr[i] + localCounter] = j
-                        globalToLocal[j] = localCounter
-                        localToGlobal[localCounter] = j
+                        globalToLocal[j] = head
+                        head = j
                         localCounter += 1
                                         
             for counter in range(localCounter):
-                globalToLocal[localToGlobal[counter]] = -1
+                if localToGlobal[head] != 0:
+                    colInd[nnz] = head
+                    data[nnz] = localToGlobal[head]
+                    nnz += 1
 
-        print(data)
-        print(colInd)
-        print(rowPtr)
+                temp = head
+                head = globalToLocal[head]
+                globalToLocal[temp] = -1
+                localToGlobal[temp] = 0
+            
+            rowPtr[i + 1] = nnz 
+
         return Sparse(n, m, data, colInd, rowPtr)
 
     def genShape(self, other):
