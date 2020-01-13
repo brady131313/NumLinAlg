@@ -164,6 +164,25 @@ class Dense(_Matrix):
 
         return Vector(self.rows, data)
 
+    def getVector(self, column):
+        if column < 0 or column >= self.columns:
+            raise Exception("Column index out of range")
+
+        data = [0] * self.rows
+        for i in range(self.rows):
+            data[i] = self.data[i][column]
+
+        return Vector(self.rows, data)
+
+    def setVector(self, column, vec):
+        if column < 0 or column >= self.columns:
+            raise Exception("Column index out of range")
+        if vec.dim != self.rows:
+            raise Exception(f"Dimension mismatch, matrix is {self.rows}x{self.columns}, vector is {vec.dim}x1")
+
+        for i in range(self.rows):
+            self.data[i][column] = vec.data[i]
+
     def __str__(self):
         str = f"{self.rows}x{self.columns} Dense"
         for i in range(self.rows):

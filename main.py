@@ -2,6 +2,7 @@ import os
 import time
 
 import matrix
+import decomp
 
 def getMatrixFile(name):
     scriptDir = os.path.dirname(__file__)
@@ -12,15 +13,19 @@ def getMatrixFile(name):
 
 
 def main():
-    with open(getMatrixFile("s3dkq4m2.mtx")) as file:
-        A = matrix.Sparse.fromFile(file)
+    #with open(getMatrixFile("jgl009.mtx")) as file:
+    #    A = matrix.Dense.fromFile(file)
+
+    A = matrix.Dense(3, 3, [[1, 2, -1],
+                            [2, 1, 1],
+                            [1, 2, 1]])
 
     start = time.time()
 
-    R = A.multMat(A)
+    Q, R = decomp.QRDecompositon(A)
 
     end = time.time()
-    #print(R)
+    print(A)
     print(f"Total operation time: {end - start}")
 
 
