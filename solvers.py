@@ -30,7 +30,8 @@ def forwardSparse(A, b):
 
         for k in range(A.rowPtr[i], A.rowPtr[i + 1] - 1):
             j = A.colInd[k]
-            diagonal = A.data[k + 1] if i == j + 1 else 1
+            if i == j + 1:
+                diagonal = A.data[k + 1]
 
             data[i] = data[i] - (A.data[k] * data[j])
 
@@ -68,7 +69,8 @@ def backwardSparse(A, b):
 
         for k in range(A.rowPtr[i] + 1, A.rowPtr[i + 1]):
             j = A.colInd[k]
-            diagonal = A.data[k - 1] if i == j - 1 else 1
+            if i == j - 1:
+                diagonal = A.data[k - 1]
         
             data[i] = data[i] - (A.data[k] * data[j])
 
