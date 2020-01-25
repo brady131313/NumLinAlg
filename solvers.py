@@ -1,6 +1,8 @@
 import matrix
 
 def forward(A, b):
+    if not isinstance(A, matrix.Dense):
+        raise Exception("Matrix A must be dense")
     if A.rows != b.dim:
         raise Exception(f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector is {b.dim}x1")
 
@@ -16,6 +18,8 @@ def forward(A, b):
     return matrix.Vector(A.rows, data)
 
 def forwardSparse(A, b):
+    if not isinstance(A, matrix.Sparse):
+        raise Exception("Matrix A must be sparse")
     if A.rows != b.dim:
         raise Exception(f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector is {b.dim}x1")
 
@@ -35,6 +39,8 @@ def forwardSparse(A, b):
     return matrix.Vector(A.rows, data) 
 
 def backward(A, b):
+    if not isinstance(A, matrix.Dense):
+        raise Exception("Matrix A must be dense")
     if A.rows != b.dim:
         raise Exception(f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector is {b.dim}x1")
 
@@ -50,6 +56,8 @@ def backward(A, b):
     return matrix.Vector(A.rows, data)
 
 def backwardSparse(A, b):
+    if not isinstance(A, matrix.Sparse):
+        raise Exception("Matrix A must be sparse")
     if A.rows != b.dim:
         raise Exception(f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector is {b.dim}x1")
     
