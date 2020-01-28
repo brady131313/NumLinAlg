@@ -5,14 +5,6 @@ import matrix
 import decomp
 import solvers
 
-def getMatrixFile(name):
-    scriptDir = os.path.dirname(__file__)
-    relDir = "samples/" + name
-    filePath = os.path.join(scriptDir, relDir)
-    return filePath
-
-
-
 def main():
     #with open(getMatrixFile("jgl009.mtx")) as file:
     #    A = matrix.Dense.fromFile(file)

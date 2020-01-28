@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from math import sqrt
+import random
 
 class Vector:
     def __init__(self, dim, data = None):
@@ -11,6 +12,17 @@ class Vector:
             self.data = data
         else:
             self.data = [0.0] * dim
+
+    @classmethod
+    def fromRandom(cls, dim, min, max):
+        if dim <= 0:
+            raise Exception("Dimension must be greater than 0")
+
+        data = [0] * dim
+        for i in range(dim):
+            data[i] = random.randint(min, max)
+        
+        return cls(dim, data)
 
     def __add__(self, other):
         if self.dim != other.dim:
