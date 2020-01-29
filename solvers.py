@@ -71,9 +71,9 @@ def backwardSparse(A, b):
             j = A.colInd[k]
             if i == j - 1:
                 diagonal = A.data[k - 1]
-        
+
             data[i] = data[i] - (A.data[k] * data[j])
 
         data[i] = data[i] / diagonal
-
+    
     return matrix.Vector(A.rows, data)
