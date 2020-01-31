@@ -10,8 +10,12 @@ import matrix
 import solvers
 
 def hw1(fileName, display):
+    start = time.time()
     with open(util.getMatrixFile(fileName)) as file:
         A = matrix.Dense.fromFile(file)
+    end = time.time()
+
+    print(f"Time to read matrix from file was {end - start} seconds")
 
     #Convert matrix to np array so I can use scipy factorization
     A = np.array(A.data)
@@ -25,8 +29,12 @@ def hw1(fileName, display):
     print(f"Time to factor input matrix was {end - start} seconds")
 
     #Convert to CSR format used in my library
+    start = time.time()
     L = matrix.Sparse.fromDense(matrix.Dense(L.shape[0], L.shape[1], L.tolist()))
     U = matrix.Sparse.fromDense(matrix.Dense(U.shape[0], U.shape[1], U.tolist()))
+    end = time.time()
+
+    print(f"Time to convert matricies to CSR was {end - start} seconds")
 
     #Generate random solution vector
     x = matrix.Vector.fromRandom(L.columns, 0, 5)

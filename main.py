@@ -9,22 +9,22 @@ def main():
     #with open(getMatrixFile("jgl009.mtx")) as file:
     #    A = matrix.Dense.fromFile(file)
 
-    C = matrix.Dense(4, 4, [[1, 0, 0, 0],
-                            [3, 4, 0, 0],
-                            [6, 7, 8, 0],
-                            [1, 2, 3, 4]])
+    C = matrix.Dense(3, 3, [[2, -1, 0],
+                            [-1, 2, -1],
+                            [0, -1, 2]])
 
     A = matrix.Sparse.fromDense(C)
-    b = matrix.Vector(4, [2, 5, 9, 5])
+    b = matrix.Vector(3, [2, 5, 9])
 
-    print(A)
+    print(C)
 
     start = time.time()
-    x = solvers.forwardSparse(A, b)
+    L, D = decomp.LDLDecomposition(C)
     end = time.time()
 
-    print(x)
-    print(A.multVec(x))
+    print(L)
+    print(D)
+
     print(f"Total operation time: {end - start}")
 
 
