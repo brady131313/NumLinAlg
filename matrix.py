@@ -2,6 +2,9 @@ from abc import ABC, abstractmethod
 from math import sqrt
 import random
 
+#0 if matrix indicies start at 0, 1 if indicies start at 1
+offset = 0
+
 class Vector:
     def __init__(self, dim, data = None):
         self.dim = dim
@@ -127,9 +130,9 @@ class Dense(_Matrix):
                     binary = True
             
             if binary:
-                data[int(entry[0]) - 1][int(entry[1]) - 1] = 1
+                data[int(entry[0]) - offset][int(entry[1]) - offset] = 1
             else:
-                data[int(entry[0]) - 1][int(entry[1]) - 1] = float(entry[2])
+                data[int(entry[0]) - offset][int(entry[1]) - offset] = float(entry[2])
         
         return cls(rows, columns, data)
 
@@ -195,6 +198,9 @@ class Dense(_Matrix):
         for i in range(self.rows):
             self.data[i][column] = vec.data[i]
 
+    def getValue(self, row, column):
+        return self.data[row][column]
+
     def __str__(self):
         str = f"{self.rows}x{self.columns} Dense"
         for i in range(self.rows):
@@ -223,7 +229,7 @@ class Sparse(_Matrix):
         else:
             self.data = []
             self.colInd = []
-            self.rowPtr = []
+            self.rowPtr = [0]
 
     @classmethod
     def fromFile(cls, file):
@@ -252,12 +258,12 @@ class Sparse(_Matrix):
                 data.append(1)
             else:
                 data.append(float(entry[2]))
-            colInd.append(int(entry[1]) - 1)
-            if last != (int(entry[0]) - 1):
+            colInd.append(int(entry[1]) - offset)
+            if last != (int(entry[0]) - offset):
                 rowPtr.append(nnz)
 
             nnz += 1
-            last = int(entry[0]) - 1
+            last = int(entry[0]) - offset
 
         rowPtr.append(nnz)
 
@@ -279,6 +285,7 @@ class Sparse(_Matrix):
             rowPtr.append(nnz)
 
         return cls(dense.rows, dense.columns, data, colInd, rowPtr)
+
 
     def scale(self, scalar):
         data = [0.0] * len(self.data)

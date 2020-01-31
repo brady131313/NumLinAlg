@@ -1,4 +1,6 @@
 import matrix
+import decomp
+import util
 
 def forward(A, b):
     if not isinstance(A, matrix.Dense):
@@ -23,6 +25,7 @@ def forwardSparse(A, b):
     if A.rows != b.dim:
         raise Exception(f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector is {b.dim}x1")
 
+    #TODO fix how diagonal entry is grabbed
     diagonal = A.data[0]
     data = [0] * A.rows
     for i in range(A.rows):
@@ -62,6 +65,7 @@ def backwardSparse(A, b):
     if A.rows != b.dim:
         raise Exception(f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector is {b.dim}x1")
     
+    #TODO Fix how diagonal entry is retrieved
     diagonal = A.data[len(A.data) - 1]
     data = [0] * A.rows
     for i in range(A.rows - 1, -1, -1):
@@ -75,5 +79,34 @@ def backwardSparse(A, b):
             data[i] = data[i] - (A.data[k] * data[j])
 
         data[i] = data[i] / diagonal
+        diagonal = 1
     
     return matrix.Vector(A.rows, data)
+
+def stationaryIterative(A, b, xInit, maxIter, tolerance):
+    if not isinstance(A, matrix.Sparse):
+        raise Exception("Matrix A must be sparse")
+
+    x = xInit
+    B = decomp.l1Smoother(A)
+    deltaInit = 0
+    delta = 9999
+
+    for k in range(maxIter):
+        r = b - A.multVec(x)
+        if k == 0:
+            deltaInit = r.norm()
+            print(deltaInit)
+        
+        delta = r.norm()
+        print(delta)
+
+        z = backwardSparse(B, r)
+        x = x + z
+
+        if delta < (tolerance * deltaInit):
+            print("Convergence")
+            return x
+
+    print("Max iter reached")
+    return x

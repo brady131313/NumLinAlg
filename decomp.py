@@ -2,7 +2,7 @@ import copy
 
 import matrix
 
-def QRDecompositon(A):
+def QR(A):
     if not isinstance(A, matrix.Dense):
         raise Exception("Matrix A must be dense")
 
@@ -23,7 +23,7 @@ def QRDecompositon(A):
     
     return [Q, R]
 
-def LDLDecomposition(A):
+def LDL(A):
     if not isinstance(A, matrix.Dense):
         raise Exception("Matrix A must be dense")
 
@@ -51,4 +51,103 @@ def LDLDecomposition(A):
 
     return [L, D]
 
+def forwardGaussSeidel(A):
+    if not isinstance(A, matrix.Sparse):
+        raise Exception("Matrix A must be sparse")
+    if A.rows != A.columns:
+        raise Exception("Matrix A must be square and SPD")
+
+    B = matrix.Sparse(A.rows, A.columns)
+    nnz = 0
+
+    for i in range(A.rows):
+        for k in range(A.rowPtr[i], A.rowPtr[i + 1]):
+            j = A.colInd[k]
+
+            if i >= j:
+                B.data.append(A.data[k])
+                B.colInd.append(j)
+                nnz += 1
         
+        B.rowPtr.append(nnz)
+
+    return B
+
+def backwardGaussSeidel(A):
+    if not isinstance(A, matrix.Sparse):
+        raise Exception("Matrix A must be sparse")
+    if A.rows != A.columns:
+        raise Exception("Matrix A must be square and SPD")
+
+    B = matrix.Sparse(A.rows, A.columns)
+    nnz = 0
+
+    for i in range(A.rows):
+        for k in range(A.rowPtr[i], A.rowPtr[i + 1]):
+            j = A.colInd[k]
+
+            if i <= j:
+                B.data.append(A.data[k])
+                B.colInd.append(j)
+                nnz += 1
+
+        B.rowPtr.append(nnz)
+
+    return B
+
+def symmetricGaussSeidel(A):
+    if not isinstance(A, matrix.Sparse):
+        raise Exception("Matrix A must be sparse")
+    if A.rows != A.columns:
+        raise Exception("Matrix A must be square and SPD")
+
+    L = matrix.Sparse(A.rows, A.columns)
+    R = matrix.Sparse(A.rows, A.columns)
+    Dinv = matrix.Sparse(A.rows, A.columns)
+    nnz = [0] * 3 # nnz[0]: L, nnz[1]: R, nnz[2]: Dinv
+
+    for i in range(A.rows):
+        for k in range(A.rowPtr[i], A.rowPtr[i + 1]):
+            j = A.colInd[k]
+
+            if i >= j:
+                L.data.append(A.data[k])
+                L.colInd.append(j)
+                nnz[0] += 1
+            if i <= j:
+                R.data.append(A.data[k])
+                R.colInd.append(j)
+                nnz[1] += 1
+            if i == j:
+                Dinv.data.append(1 / A.data[k])
+                Dinv.colInd.append(j)
+                nnz[2] += 1
+
+        L.rowPtr.append(nnz[0])
+        R.rowPtr.append(nnz[1])
+        Dinv.rowPtr.append(nnz[2])
+    
+    B = L.multMat(Dinv).multMat(R)
+    return B
+
+def l1Smoother(A):
+    if not isinstance(A, matrix.Sparse):
+        raise Exception("Matrix A must be sparse")
+    if A.rows != A.columns:
+        raise Exception("Matrix A must be square and SPD")
+
+    B = matrix.Sparse(A.rows, A.columns)
+    nnz = 0
+
+    for i in range(A.rows):
+        sum = 0
+        for k in range(A.rowPtr[i], A.rowPtr[i + 1]):
+            sum += abs(A.data[k])
+        
+        B.data.append(sum)
+        B.colInd.append(i)
+        nnz += 1
+
+        B.rowPtr.append(nnz)
+
+    return B
