@@ -80,7 +80,7 @@ def backwardSparse(A, b):
     
     return matrix.Vector(A.rows, data)
 
-def stationaryIterative(A, b, xInit, maxIter, tolerance):
+def stationaryIterative(A, b, xInit, maxIter, tolerance, displayResidual):
     if not isinstance(A, matrix.Sparse):
         raise Exception("Matrix A must be sparse")
 
@@ -95,7 +95,8 @@ def stationaryIterative(A, b, xInit, maxIter, tolerance):
             deltaInit = r.norm()
         
         delta = r.norm()
-        print(delta)
+        if displayResidual:
+            print(delta)
 
         z = backwardSparse(B, r)
         x = x + z
