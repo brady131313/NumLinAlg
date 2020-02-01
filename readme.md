@@ -14,3 +14,11 @@ matrix files must be placed in the samples directory. An optional -d flag will d
 *Memory Cost*: 2nnz + 3n + 2, where nnz is number of non zero entries of a CSR matrix, and n is the number of rows and columns of the matrix.
 
 *Operation Cost*: 2nnz - n
+
+## Homework 2
+*Objective*: Given a nxn SPD matrix in CSR format, write a stationary iterative method to solve Ax=b.
+*Input*: nxn SPD matrix A, rhs vector b, initial iterate x0, max iterations, and tolerance.
+*Output*: number of iterations, current iter, residual norm, and accuracy achieved.
+
+*Usage*: python hw2.py [-i MAXITER] [-t TOLERANCE] [-b ITERMATRIX] [-d] [-r] filename
+The parameter -b can be l1 for l1Smoother, fgs for forward Gauss Seidel, bgs for backward Gauss Seidel, or sgs for symmetric Gauss Seidel. Additonally -d will display the resulting iter at the end of the algorithm. -r will display the residual at each iteration of the algorithm.
