@@ -19,24 +19,24 @@ def hw2(fileName, display):
 
     start = time.time()
     xInit = matrix.Vector(A.columns)
-    xResult = solvers.stationaryIterative(A, b, xInit, 10000, 0.000001)
+    xResult, iterations, residual = solvers.stationaryIterative(A, b, xInit, 1000, 1e-6)
     end = time.time()
-
-    print(f"Time to iteratively solve system was {end - start} seconds")
 
     if display:
         util.compareVectors(x, xResult)
 
+    print(f"Iterations = {iterations}, Residual = {residual} on exit")
+    print(f"Time to iteratively solve system was {end - start} seconds")
 
-'''
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument("filename", help="matrix to be factored and solved", type=str)
 parser.add_argument("-d", dest="display", action='store_true', help="display result")
 args = parser.parse_args()
 
-if true or not args.filename or len(args.filename) == 0:
+if not args.filename or len(args.filename) == 0:
     print("Matrix filename must be supplied")
 else:
     hw2(args.filename, args.display)
-'''
-hw2("25.mtx", True)
+

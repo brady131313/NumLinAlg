@@ -85,7 +85,7 @@ def stationaryIterative(A, b, xInit, maxIter, tolerance):
         raise Exception("Matrix A must be sparse")
 
     x = xInit
-    B = decomp.l1Smoother(A)
+    B = decomp.backwardGaussSeidel(A)
     deltaInit = 0
     delta = 9999
 
@@ -93,7 +93,6 @@ def stationaryIterative(A, b, xInit, maxIter, tolerance):
         r = b - A.multVec(x)
         if k == 0:
             deltaInit = r.norm()
-            print(deltaInit)
         
         delta = r.norm()
         print(delta)
@@ -103,7 +102,9 @@ def stationaryIterative(A, b, xInit, maxIter, tolerance):
 
         if delta < (tolerance * deltaInit):
             print("Convergence")
-            return x
+            print(f"Accuracy: {delta / deltaInit}")
+            return [x, k, delta]
 
     print("Max iter reached")
-    return x
+    print(f"Accuracy: {delta / deltaInit}")
+    return [x, maxIter, delta]
