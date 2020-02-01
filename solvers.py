@@ -25,18 +25,17 @@ def forwardSparse(A, b):
     if A.rows != b.dim:
         raise Exception(f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector is {b.dim}x1")
 
-    #TODO fix how diagonal entry is grabbed
-    diagonal = A.data[0]
     data = [0] * A.rows
     for i in range(A.rows):
         data[i] = b.data[i]
+        diagonal = 1
 
-        for k in range(A.rowPtr[i], A.rowPtr[i + 1] - 1):
+        for k in range(A.rowPtr[i], A.rowPtr[i + 1]):
             j = A.colInd[k]
-            if i == j + 1:
-                diagonal = A.data[k + 1]
-
-            data[i] = data[i] - (A.data[k] * data[j])
+            if i == j:
+                diagonal = A.data[k]
+            else:
+                data[i] = data[i] - (A.data[k] * data[j])
 
         data[i] = data[i] / diagonal
 
@@ -65,21 +64,19 @@ def backwardSparse(A, b):
     if A.rows != b.dim:
         raise Exception(f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector is {b.dim}x1")
     
-    #TODO Fix how diagonal entry is retrieved
-    diagonal = A.data[len(A.data) - 1]
     data = [0] * A.rows
     for i in range(A.rows - 1, -1, -1):
         data[i] = b.data[i]
+        diagonal = 1
 
-        for k in range(A.rowPtr[i] + 1, A.rowPtr[i + 1]):
+        for k in range(A.rowPtr[i], A.rowPtr[i + 1]):
             j = A.colInd[k]
-            if i == j - 1:
-                diagonal = A.data[k - 1]
-
-            data[i] = data[i] - (A.data[k] * data[j])
+            if i == j:
+                diagonal = A.data[k]
+            else:
+                data[i] = data[i] - (A.data[k] * data[j])
 
         data[i] = data[i] / diagonal
-        diagonal = 1
     
     return matrix.Vector(A.rows, data)
 
