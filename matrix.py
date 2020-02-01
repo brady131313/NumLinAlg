@@ -97,6 +97,22 @@ class _Matrix(ABC):
     def multVec(self, other):
         pass
 
+    @abstractmethod
+    def getValue(self, row, column):
+        pass
+
+    def visualizeShape(self):
+        str = ""
+        for i in range(self.rows):
+            str += "\n"
+            for j in range(self.columns):
+                value = self.getValue(i, j)
+                str += "■" if value != 0 else "▫"
+                str += " "
+        
+        print(str)
+
+
 
 
 class Dense(_Matrix):
@@ -206,7 +222,7 @@ class Dense(_Matrix):
         for i in range(self.rows):
             str += "\n"
             for j in range(self.columns):
-                str += f"{self.data[i][j]} "
+                str += f"{format(self.data[i][j], '.2f')} "
 
         return str
 
@@ -431,6 +447,6 @@ class Sparse(_Matrix):
         for i in range(self.rows):
             str += "\n"
             for j in range(self.columns):
-                str += f"{self.getValue(i, j)} "
+                str += f"{format(self.getValue(i, j), '.2f')} "
 
         return str

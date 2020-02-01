@@ -102,8 +102,8 @@ def symmetricGaussSeidel(A):
         raise Exception("Matrix A must be square and SPD")
 
     L = matrix.Sparse(A.rows, A.columns)
-    R = matrix.Sparse(A.rows, A.columns)
-    Dinv = matrix.Sparse(A.rows, A.columns)
+    U = matrix.Sparse(A.rows, A.columns)
+    D = matrix.Sparse(A.rows, A.columns)
     nnz = [0] * 3 # nnz[0]: L, nnz[1]: R, nnz[2]: Dinv
 
     for i in range(A.rows):
@@ -115,20 +115,19 @@ def symmetricGaussSeidel(A):
                 L.colInd.append(j)
                 nnz[0] += 1
             if i <= j:
-                R.data.append(A.data[k])
-                R.colInd.append(j)
+                U.data.append(A.data[k])
+                U.colInd.append(j)
                 nnz[1] += 1
             if i == j:
-                Dinv.data.append(1 / A.data[k])
-                Dinv.colInd.append(j)
+                D.data.append(A.data[k])
+                D.colInd.append(j)
                 nnz[2] += 1
 
         L.rowPtr.append(nnz[0])
-        R.rowPtr.append(nnz[1])
-        Dinv.rowPtr.append(nnz[2])
+        U.rowPtr.append(nnz[1])
+        D.rowPtr.append(nnz[2])
     
-    B = L.multMat(Dinv).multMat(R)
-    return B
+    return [L, D, U]
 
 def l1Smoother(A):
     if not isinstance(A, matrix.Sparse):

@@ -8,6 +8,8 @@ def getMatrixFile(name):
 
 def compareVectors(v1, v2):
     for i in range(v1.dim):
+        if i >= 25:
+            return
         print(f"{round(v1.data[i], 3)} : {round(v2.data[i], 3)}")
 
 def checkLowerTriangular(A):

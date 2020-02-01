@@ -1,3 +1,5 @@
+from enum import Enum
+
 import matrix
 import decomp
 import util
@@ -80,15 +82,30 @@ def backwardSparse(A, b):
     
     return matrix.Vector(A.rows, data)
 
-def stationaryIterative(A, b, xInit, maxIter, tolerance, displayResidual):
+class IterMatrix(Enum):
+    l1Smoother = 1
+    forwardGaussSeidel = 2
+    backwardGaussSeidel = 3
+    symmetricGaussSeidel = 4
+
+def stationaryIterative(A, b, xInit, maxIter, tolerance, iterMatrix, displayResidual):
     if not isinstance(A, matrix.Sparse):
         raise Exception("Matrix A must be sparse")
 
     x = xInit
-    B = decomp.backwardGaussSeidel(A)
     deltaInit = 0
     delta = 9999
 
+    if iterMatrix == IterMatrix.l1Smoother:
+        B = decomp.l1Smoother(A)
+    elif iterMatrix == IterMatrix.forwardGaussSeidel:
+        B = decomp.forwardGaussSeidel(A)
+    elif iterMatrix == IterMatrix.backwardGaussSeidel:
+        B = decomp.backwardGaussSeidel(A)
+    elif iterMatrix == IterMatrix.symmetricGaussSeidel:
+        L, D, U = decomp.symmetricGaussSeidel(A)
+    
+    
     for k in range(maxIter):
         r = b - A.multVec(x)
         if k == 0:
@@ -98,7 +115,14 @@ def stationaryIterative(A, b, xInit, maxIter, tolerance, displayResidual):
         if displayResidual:
             print(delta)
 
-        z = backwardSparse(B, r)
+        if iterMatrix == IterMatrix.l1Smoother or iterMatrix == IterMatrix.forwardGaussSeidel:
+            z = forwardSparse(B, r)
+        elif iterMatrix == IterMatrix.backwardGaussSeidel:
+            z = backwardSparse(B, r)
+        elif iterMatrix == IterMatrix.symmetricGaussSeidel:
+            y = forwardSparse(L, r)
+            z = backwardSparse(U, D.multVec(y))
+
         x = x + z
 
         if delta < (tolerance * deltaInit):
@@ -108,4 +132,5 @@ def stationaryIterative(A, b, xInit, maxIter, tolerance, displayResidual):
 
     print("Max iter reached")
     print(f"Accuracy: {delta / deltaInit}")
+
     return [x, maxIter, delta]
