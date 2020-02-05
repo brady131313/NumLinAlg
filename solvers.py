@@ -36,7 +36,7 @@ def forwardSparse(A, b):
             j = A.colInd[k]
             if i == j:
                 diagonal = A.data[k]
-            else:
+            elif i > j:
                 data[i] = data[i] - (A.data[k] * data[j])
 
         data[i] = data[i] / diagonal
@@ -75,7 +75,7 @@ def backwardSparse(A, b):
             j = A.colInd[k]
             if i == j:
                 diagonal = A.data[k]
-            else:
+            elif i < j:
                 data[i] = data[i] - (A.data[k] * data[j])
 
         data[i] = data[i] / diagonal
@@ -98,14 +98,10 @@ def stationaryIterative(A, b, xInit, maxIter, tolerance, iterMatrix, displayResi
 
     if iterMatrix == IterMatrix.l1Smoother:
         B = decomp.l1Smoother(A)
-    elif iterMatrix == IterMatrix.forwardGaussSeidel:
-        B = decomp.forwardGaussSeidel(A)
-    elif iterMatrix == IterMatrix.backwardGaussSeidel:
-        B = decomp.backwardGaussSeidel(A)
     elif iterMatrix == IterMatrix.symmetricGaussSeidel:
-        L, D, U = decomp.symmetricGaussSeidel(A)
+        D = decomp.diagonal(A)
     
-    
+
     for k in range(maxIter):
         r = b - A.multVec(x)
         if k == 0:
@@ -115,13 +111,15 @@ def stationaryIterative(A, b, xInit, maxIter, tolerance, iterMatrix, displayResi
         if displayResidual:
             print(delta)
 
-        if iterMatrix == IterMatrix.l1Smoother or iterMatrix == IterMatrix.forwardGaussSeidel:
+        if iterMatrix == IterMatrix.l1Smoother:
             z = forwardSparse(B, r)
+        elif iterMatrix == IterMatrix.forwardGaussSeidel:
+            z = forwardSparse(A, r)
         elif iterMatrix == IterMatrix.backwardGaussSeidel:
-            z = backwardSparse(B, r)
+            z = backwardSparse(A, r)
         elif iterMatrix == IterMatrix.symmetricGaussSeidel:
-            y = forwardSparse(L, r)
-            z = backwardSparse(U, D.multVec(y))
+            y = forwardSparse(A, r)
+            z = backwardSparse(A, D.elementWiseMult(y))
 
         x = x + z
 

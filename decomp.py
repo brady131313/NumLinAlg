@@ -51,83 +51,22 @@ def LDL(A):
 
     return [L, D]
 
-def forwardGaussSeidel(A):
+def diagonal(A):
     if not isinstance(A, matrix.Sparse):
         raise Exception("Matrix A must be sparse")
     if A.rows != A.columns:
         raise Exception("Matrix A must be square and SPD")
 
-    B = matrix.Sparse(A.rows, A.columns)
-    nnz = 0
+    D = matrix.Vector(A.rows)
 
     for i in range(A.rows):
         for k in range(A.rowPtr[i], A.rowPtr[i + 1]):
             j = A.colInd[k]
 
-            if i >= j:
-                B.data.append(A.data[k])
-                B.colInd.append(j)
-                nnz += 1
-        
-        B.rowPtr.append(nnz)
-
-    return B
-
-def backwardGaussSeidel(A):
-    if not isinstance(A, matrix.Sparse):
-        raise Exception("Matrix A must be sparse")
-    if A.rows != A.columns:
-        raise Exception("Matrix A must be square and SPD")
-
-    B = matrix.Sparse(A.rows, A.columns)
-    nnz = 0
-
-    for i in range(A.rows):
-        for k in range(A.rowPtr[i], A.rowPtr[i + 1]):
-            j = A.colInd[k]
-
-            if i <= j:
-                B.data.append(A.data[k])
-                B.colInd.append(j)
-                nnz += 1
-
-        B.rowPtr.append(nnz)
-
-    return B
-
-def symmetricGaussSeidel(A):
-    if not isinstance(A, matrix.Sparse):
-        raise Exception("Matrix A must be sparse")
-    if A.rows != A.columns:
-        raise Exception("Matrix A must be square and SPD")
-
-    L = matrix.Sparse(A.rows, A.columns)
-    U = matrix.Sparse(A.rows, A.columns)
-    D = matrix.Sparse(A.rows, A.columns)
-    nnz = [0] * 3 # nnz[0]: L, nnz[1]: R, nnz[2]: Dinv
-
-    for i in range(A.rows):
-        for k in range(A.rowPtr[i], A.rowPtr[i + 1]):
-            j = A.colInd[k]
-
-            if i >= j:
-                L.data.append(A.data[k])
-                L.colInd.append(j)
-                nnz[0] += 1
-            if i <= j:
-                U.data.append(A.data[k])
-                U.colInd.append(j)
-                nnz[1] += 1
             if i == j:
-                D.data.append(A.data[k])
-                D.colInd.append(j)
-                nnz[2] += 1
-
-        L.rowPtr.append(nnz[0])
-        U.rowPtr.append(nnz[1])
-        D.rowPtr.append(nnz[2])
+                D.data[i] = A.data[k]
     
-    return [L, D, U]
+    return D
 
 def l1Smoother(A):
     if not isinstance(A, matrix.Sparse):

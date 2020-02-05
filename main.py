@@ -10,7 +10,7 @@ def main():
     with open(util.getMatrixFile("50.mtx")) as file:
         A = matrix.Sparse.fromFile(file)
 
-    L, U = decomp.symmetricGaussSeidel(A)
+    L, D, U = decomp.symmetricGaussSeidel(A)
     L.visualizeShape()
     U.visualizeShape()
 

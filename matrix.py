@@ -54,6 +54,16 @@ class Vector:
 
         return Vector(self.dim, data)
 
+    def elementWiseMult(self, other):
+        if self.dim != other.dim:
+            raise Exception(f"Dimension mismatch: {self.dim} != {other.dim}")
+
+        data = [0] * self.dim
+        for i in range(self.dim):
+            data[i] = self.data[i] * other.data[i]
+
+        return Vector(self.dim, data)
+
     def dot(self, other):
         if self.dim != other.dim:
             raise Exception(f"Dimension mismatch: {self.dim} != {other.dim}")
