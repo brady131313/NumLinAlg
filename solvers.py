@@ -82,6 +82,19 @@ def backwardSparse(A, b):
     
     return matrix.Vector(A.rows, data)
 
+def vectorSolver(a, b):
+    if a.dim != b.dim:
+        raise Exception(f"Dimension mismatch, {a.dim} != {b.dim}")
+
+    data = [0] * a.dim
+    for i in range(a.dim):
+        if a.data[i] == 0 or b.data[i] == 0:
+            data[i] = 0
+        else:
+            data[i] = b.data[i] / a.data[i]
+
+    return matrix.Vector(a.dim, data)
+
 class IterMatrix(Enum):
     l1Smoother = 1
     forwardGaussSeidel = 2
@@ -97,7 +110,7 @@ def stationaryIterative(A, b, xInit, maxIter, tolerance, iterMatrix, displayResi
     delta = 9999
 
     if iterMatrix == IterMatrix.l1Smoother:
-        B = decomp.l1Smoother(A)
+        D = decomp.l1Smoother(A)
     elif iterMatrix == IterMatrix.symmetricGaussSeidel:
         D = decomp.diagonal(A)
     
@@ -112,7 +125,7 @@ def stationaryIterative(A, b, xInit, maxIter, tolerance, iterMatrix, displayResi
             print(delta)
 
         if iterMatrix == IterMatrix.l1Smoother:
-            z = forwardSparse(B, r)
+            z = vectorSolver(D, r)
         elif iterMatrix == IterMatrix.forwardGaussSeidel:
             z = forwardSparse(A, r)
         elif iterMatrix == IterMatrix.backwardGaussSeidel:

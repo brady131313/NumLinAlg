@@ -74,18 +74,13 @@ def l1Smoother(A):
     if A.rows != A.columns:
         raise Exception("Matrix A must be square and SPD")
 
-    B = matrix.Sparse(A.rows, A.columns)
-    nnz = 0
+    b = matrix.Vector(A.rows)
 
     for i in range(A.rows):
         sum = 0
         for k in range(A.rowPtr[i], A.rowPtr[i + 1]):
             sum += abs(A.data[k])
-        
-        B.data.append(sum)
-        B.colInd.append(i)
-        nnz += 1
 
-        B.rowPtr.append(nnz)
+        b.data[i] = sum
 
-    return B
+    return b
