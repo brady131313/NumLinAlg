@@ -137,7 +137,7 @@ class Dense(_Matrix):
             self.data = [[0.0] * self.columns for i in range(self.rows)]
     
     @classmethod
-    def fromFile(cls, file):
+    def fromFile(cls, file, relation = False):
         entry = []
         binary = False
         checked = False
@@ -152,7 +152,7 @@ class Dense(_Matrix):
             entry = line.split()
             if not checked:
                 checked = True
-                if len(entry) == 2:
+                if len(entry) == 2 or relation:
                     binary = True
             
             if binary:
@@ -258,7 +258,7 @@ class Sparse(_Matrix):
             self.rowPtr = [0]
 
     @classmethod
-    def fromFile(cls, file):
+    def fromFile(cls, file, relation = False):
         data = []
         colInd = []
         rowPtr = [0]
@@ -275,7 +275,7 @@ class Sparse(_Matrix):
             entries.append(line.split())
         entries.sort(key=lambda tup: int(tup[0]))
 
-        if len(entries[0]) == 2:
+        if len(entries[0]) == 2 or relation:
             binary = True
 
         last = 0
