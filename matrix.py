@@ -258,12 +258,11 @@ class Sparse(_Matrix):
             self.rowPtr = [0]
 
     @classmethod
-    def fromFile(cls, file, relation = False):
+    def fromFile(cls, file, relation = False, graph = False):
         data = []
         colInd = []
         rowPtr = [0]
         nnz = 0
-        entries = []
         binary = False
 
         next(file)
@@ -271,28 +270,35 @@ class Sparse(_Matrix):
         info = next(file).split()
         rows, columns = int(info[0]), int(info[1])
 
+        entries = [[] for i in range(rows)]
+
         for line in file:
-            entries.append(line.split())
-        entries.sort(key=lambda tup: int(tup[0]))
+            temp = line.split()
+            row, column = int(temp[0]), int(temp[1])
+            num = float(temp[2]) if len(temp) == 3 else None
+
+            entry = (row, column, num) if num else (row, column)
+
+            if not graph:
+                entries[row].append(entry)
+            elif graph and row != column:
+                entries[row].append(entry)
 
         if len(entries[0]) == 2 or relation:
             binary = True
 
-        last = 0
-        for entry in entries:
-            if binary:
-                data.append(1)
-            else:
-                data.append(float(entry[2]))
-            colInd.append(int(entry[1]) - offset)
-            if last != (int(entry[0]) - offset):
-                rowPtr.append(nnz)
+        for i in range(rows):
+            for j in range(len(entries[i])):
+                if binary:
+                    data.append(1)
+                else:
+                    data.append(entries[i][j][2])
 
-            nnz += 1
-            last = int(entry[0]) - offset
+                colInd.append(entries[i][j][1])
+                nnz += 1
 
-        rowPtr.append(nnz)
-
+            rowPtr.append(nnz)
+        
         return cls(rows, columns, data, colInd, rowPtr)
     
     @classmethod
