@@ -13,14 +13,13 @@ def main():
         g = graph.Graph.fromFile(file)
     end = time.time()
 
-
-    #TODO should adjacency matrix have entries along diagonal?
+    #TODO for some reason EtE != D + A
+    #Perhaps I'm finding either the edge_vertex matrix wrong
+    #Maybe degree matrix is found wrong?
 
     print(g.adjacency)
-    g.adjacency.visualizeShape()
-
-    #print(g.getDegree())
-    #print(g.getVertexEdge().multMat(g.edgeVertex))
+    print(g.getDegree())
+    print(g.getVertexEdge().multMat(g.edgeVertex))
 
 
     print(f"Total operation time: {end - start}")

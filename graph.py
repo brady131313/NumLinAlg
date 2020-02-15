@@ -32,7 +32,7 @@ class Graph:
 def fromFileToEdge(file):
     data = []
     colInd = []
-    rowPtr = [0]
+    rowPtr = []
     nnz = 0
     duplicates = set()
     entries = []
@@ -47,30 +47,30 @@ def fromFileToEdge(file):
         #Lists in python are not hashable so store in tuple
         entry = (int(temp[0]), int(temp[1]))
         #Check if tuple has already been read
-        if entry not in duplicates and entry[::-1] not in duplicates:
+        if entry not in duplicates and entry[::-1] not in duplicates and entry[0] != entry[1]:
             duplicates.add(entry)
             entries.append(sorted(entry))
 
     #Sort entries by row so they can be added to CSR 
     entries = sorted(entries, key=itemgetter(0))
+    print(len(entries))
+    print(len(duplicates))
+    print(entries)
     
-    last = 0
     for i, entry in enumerate(entries):
+        rowPtr.append(nnz)
+
         data.append(1)
         colInd.append(entry[0])
 
         data.append(1)
         colInd.append(entry[1])
 
-        if last != i:
-            rowPtr.append(nnz)
-
         nnz += 2
-        last = i
     
-    rowPtr.append(nnz)
+    rowPtr.append(nnz)    
 
-    return matrix.Sparse(rows, columns, data, colInd, rowPtr)
+    return matrix.Sparse(len(entries), columns, data, colInd, rowPtr)
 
         
 
