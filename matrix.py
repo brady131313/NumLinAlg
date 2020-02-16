@@ -47,6 +47,16 @@ class Vector:
 
         return Vector(self.dim, data)
 
+    def equal(self, other):
+        if self.dim != other.dim:
+            raise Exception(f"Dimension mismatch: {self.dim} != {other.dim}")
+
+        for i in range(self.dim):
+            if self.data[i] != other.data[i]:
+                return False
+
+        return True
+
     def scale(self, scalar):
         data = [0] * self.dim
         for i in range(self.dim):
@@ -280,9 +290,9 @@ class Sparse(_Matrix):
             entry = (row, column, num) if num else (row, column)
 
             if not graph:
-                entries[row].append(entry)
+                entries[row - offset].append(entry)
             elif graph and row != column:
-                entries[row].append(entry)
+                entries[row - offset].append(entry)
 
         if len(entries[0]) == 2 or relation:
             binary = True

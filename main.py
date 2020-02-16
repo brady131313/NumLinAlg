@@ -9,7 +9,7 @@ import util
 
 def main():
     start = time.time()
-    with open(util.getMatrixFile("25.mtx")) as file:
+    with open(util.getMatrixFile("test.mtx")) as file:
         g = graph.Graph.fromFile(file)
     end = time.time()
 
@@ -17,10 +17,11 @@ def main():
     #Perhaps I'm finding either the edge_vertex matrix wrong
     #Maybe degree matrix is found wrong?
 
-    print(g.adjacency)
-    print(g.getDegree())
-    print(g.getVertexEdge().multMat(g.edgeVertex))
+    L = g.getLaplacian()
 
+    print(g.getDegree())
+    print(g.adjacency)
+    print(L)
 
     print(f"Total operation time: {end - start}")
 
