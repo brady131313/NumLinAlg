@@ -69,6 +69,11 @@ def hw3(filename, K, d, maxIter, tolerance, p):
     clusters, iterations, centroidDist = decomp.kMeans(X, K, d, maxIter, tolerance)
     print(f"{iterations} iterations to find clusters")
 
+    subscripts = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
+    for i in range(len(clusters)):
+        print(f"|A{i + 1}|".translate(subscripts) + f" = {len(clusters[i])}")
+
+
     XConv = [matrix.Vector(len(x), list(x)) for x in X]
     for i in range(len(clusters)):
         clusters[i] = [matrix.Vector(len(c), list(c)) for c in clusters[i]]
