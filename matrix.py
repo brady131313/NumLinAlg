@@ -3,7 +3,7 @@ from math import sqrt
 import random
 
 #0 if matrix indicies start at 0, 1 if indicies start at 1
-offset = 0
+offset = 1
 
 class Vector:
     def __init__(self, dim, data = None):

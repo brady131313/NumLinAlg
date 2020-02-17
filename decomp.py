@@ -87,8 +87,9 @@ def l1Smoother(A):
 
     return b
 
-def kMeans(X, K, maxIter, tolerance):
+def kMeans(X, K, d, maxIter, tolerance):
     c = random.choices(X, k=K)
+    #c = X[:6]
     clusters = []
 
     cIter = 0
@@ -108,7 +109,7 @@ def kMeans(X, K, maxIter, tolerance):
             clusters[closest[1]].append(x)
         
         for r in range(K):
-            newC = np.array([0] * K)
+            newC = np.array([0] * d)
 
             for x in clusters[r]:
                 newC = np.add(newC, x)
@@ -125,10 +126,11 @@ def kMeans(X, K, maxIter, tolerance):
         
         if i > 1 and abs(cIter - pIter) <= tolerance * pIter:
             print("Convergence")
-            return clusters
+            return (clusters, i, cIter)
     
     print("Max iter")
-    return clusters
+    print(f"Squared Distance: {cIter}")
+    return (clusters, maxIter, cIter)
 
 
             

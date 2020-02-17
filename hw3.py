@@ -35,7 +35,9 @@ def visualizeClusters2d(X, P):
     yCoords = [x[1] for x in X]
     colors = getColors(X, P)
 
-    plt.scatter(xCoords, yCoords, c=colors, alpha=0.4)
+    size, alpha = (75, 0.4) if len(xCoords) < 1250 else (50, 0.2)
+    
+    plt.scatter(xCoords, yCoords, c=colors, s=size, alpha=alpha, marker="o")
 
     plt.show()
 
@@ -48,11 +50,13 @@ def visualizeClusters3d(X, P):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
-    ax.scatter(xCoords, yCoords, zCoords, c=colors)
+    size, alpha = (75, 0.4) if len(xCoords) < 1250 else (50, 0.2)
+
+    ax.scatter(xCoords, yCoords, zCoords, c=colors, s=size, alpha=alpha)
 
     plt.show()
 
-def hw3(filename, K, d, maxIter, tolerance):
+def hw3(filename, K, d, maxIter, tolerance, p):
     with open(util.getMatrixFile(filename)) as file:
         g = graph.Graph.fromFile(file)
 
@@ -62,7 +66,8 @@ def hw3(filename, K, d, maxIter, tolerance):
     L = g.getLaplacian()
     X = formCoordinateVectors(L, d)
 
-    clusters = decomp.kMeans(X, K, maxIter, tolerance)
+    clusters, iterations, centroidDist = decomp.kMeans(X, K, d, maxIter, tolerance)
+    print(f"{iterations} iterations to find clusters")
 
     XConv = [matrix.Vector(len(x), list(x)) for x in X]
     for i in range(len(clusters)):
@@ -80,16 +85,21 @@ def hw3(filename, K, d, maxIter, tolerance):
     else:
         print("Can't display 4d :(")    
 
+    if p:
+        vertexAggregate.visualizeShape()
+        print(coarse)
+
 parser = argparse.ArgumentParser()
 parser.add_argument("filename", help="matrix to be factored and solved", type=str)
 parser.add_argument("-d", dest="d", default=2, action='store', type=int, help="Dimensions")
-parser.add_argument("-K", dest="K", default=2, action='store', type=int, help="Dimensions")
+parser.add_argument("-K", dest="K", default=2, action='store', type=int, help="Partitions")
 parser.add_argument("-i", dest="maxIter", default=1000, action='store', type=int, help="Max number of iterations")
-parser.add_argument("-t", dest="tolerance", default=1e-3, action='store', type=float, help="Tolerance needed for convergence")
+parser.add_argument("-t", dest="tolerance", default=1e-6, action='store', type=float, help="Tolerance needed for convergence")
+parser.add_argument("-p", dest="p", action='store_true', help="Display matricies")
 args = parser.parse_args()
 
 if not args.filename or len(args.filename) == 0:
     print("Grahp filename must be supplied")
 else:
-    hw3(args.filename, args.K, args.d, args.maxIter, args.tolerance)
+    hw3(args.filename, args.K, args.d, args.maxIter, args.tolerance, args.p)
 
