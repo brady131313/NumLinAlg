@@ -449,6 +449,7 @@ class Sparse(_Matrix):
         for i in range(self.rows):
             for k in range(self.rowPtr[i], self.rowPtr[i + 1]):
                 j = self.colInd[k]
+                #print(self.data[self.rowPtr[i]:self.rowPtr[i + 1]])
                 data[i] += self.data[k] * other.data[j]
 
         return Vector(self.rows, data)

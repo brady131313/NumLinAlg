@@ -52,13 +52,14 @@ def getVertexAggregate(coords, clusters):
                 if coords[i].equal(clusters[j][k]):
                     data.append(1)
                     colInd.append(j)
-                    nnz += 1
+        nnz += 1
         rowPtr.append(nnz)
+
 
     return matrix.Sparse(len(coords), len(clusters), data, colInd, rowPtr)
 
 def formCoarse(P, A):
-    return P.transpose().multMat(A.multMat(P))
+    return P.transpose().multMat(A).multMat(P)
 
 
 def fromFileToEdge(file):

@@ -60,8 +60,8 @@ def hw3(filename, K, d, maxIter, tolerance, p):
     with open(util.getMatrixFile(filename)) as file:
         g = graph.Graph.fromFile(file)
 
-    if K > g.adjacency.rows or d < K or d > g.adjacency.rows:
-        raise Exception("k << n, d >= k, d < n must hold")
+    #if K > g.adjacency.rows or d < K or d > g.adjacency.rows:
+    #    raise Exception("k << n, d >= k, d < n must hold")
 
     L = g.getLaplacian()
     X = formCoordinateVectors(L, d)
@@ -79,9 +79,12 @@ def hw3(filename, K, d, maxIter, tolerance, p):
         clusters[i] = [matrix.Vector(len(c), list(c)) for c in clusters[i]]
 
     vertexAggregate = graph.getVertexAggregate(XConv, clusters)
+    c1 = matrix.Vector(2, [1] * 2)
+
+    #print(vertexAggregate.multVec(c1))
     
     A = g.getVertexEdge().multMat(g.edgeVertex)
-    coarse = graph.formCoarse(vertexAggregate, A)
+    coarse = graph.formCoarse(vertexAggregate, L)
     
     if d == 2:
         visualizeClusters2d(X, vertexAggregate)
