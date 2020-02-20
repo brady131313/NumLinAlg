@@ -1,4 +1,6 @@
 from operator import itemgetter
+import numpy as np
+
 import matrix
 import decomp
 
@@ -39,24 +41,32 @@ class Graph:
         return L
 
 
-
-def getVertexAggregate(coords, clusters):
+def getVertexAggregate(X, clusters):
     data = []
     colInd = []
     rowPtr = [0]
     nnz = 0
 
-    for i in range(len(coords)):
-        for j in range(len(clusters)):
-            for k in range(len(clusters[j])):
-                if coords[i].equal(clusters[j][k]):
-                    data.append(1)
-                    colInd.append(j)
+    X = [matrix.Vector(len(x), list(x)) for x in X]
+    for i in range(len(clusters)):
+        clusters[i] = [matrix.Vector(len(c), list(c)) for c in clusters[i]]
+
+    for x in X:
+        aggregate = _findAggregate(x, clusters)
+
+        data.append(1)
+        colInd.append(aggregate)
         nnz += 1
         rowPtr.append(nnz)
 
+    return matrix.Sparse(nnz, len(clusters), data, colInd, rowPtr)
 
-    return matrix.Sparse(len(coords), len(clusters), data, colInd, rowPtr)
+def _findAggregate(x, clusters):
+    for i in range(len(clusters)):
+        for j in range(len(clusters[i])):
+            if x.equal(clusters[i][j]):
+                return i
+            
 
 def formCoarse(P, A):
     return P.transpose().multMat(A).multMat(P)

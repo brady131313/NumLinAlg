@@ -5,10 +5,11 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 import numpy as np
 import argparse
+import time
 
 import util
 import graph
-import decomp
+import cluster
 import matrix
 
 def formCoordinateVectors(L, d):
@@ -16,7 +17,6 @@ def formCoordinateVectors(L, d):
     converted = converted.asfptype()
     
     eigs, vecs = eigsh(converted, d, which='SM', tol=1e-3)
-    
     return vecs
 
 def getColors(X, P):
@@ -25,9 +25,10 @@ def getColors(X, P):
     for i in range(P.rows):
         for k in range(P.rowPtr[i], P.rowPtr[i + 1]):
             j = P.colInd[k]
-            colors[i] = 1 - (1/(1 + j))
+            #colors[i] = 1 - (1/(1 + j))
+            colors[i] = j
 
-    colorMap = cm.get_cmap('plasma', 12)
+    colorMap = cm.get_cmap('Dark2')
     return colorMap(colors)
 
 def visualizeClusters2d(X, P):
@@ -66,32 +67,26 @@ def hw3(filename, K, d, maxIter, tolerance, p):
     L = g.getLaplacian()
     X = formCoordinateVectors(L, d)
 
-    clusters, iterations, centroidDist = decomp.kMeans(X, K, d, maxIter, tolerance)
+    clusters, iterations, delta = cluster.kMeans(X, K, d, maxIter, tolerance)
     print(f"{iterations} iterations to find clusters")
 
-    subscripts = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
     for i in range(len(clusters)):
-        print(f"|A{i + 1}|".translate(subscripts) + f" = {len(clusters[i])}")
+        print(f"|A{i + 1}| = {len(clusters[i])}")
 
+    start = time.time()
+    vertexAggregate = graph.getVertexAggregate(X, clusters)
+    end = time.time()
+    print(f"Elapsed: {end - start}")
 
-    XConv = [matrix.Vector(len(x), list(x)) for x in X]
-    for i in range(len(clusters)):
-        clusters[i] = [matrix.Vector(len(c), list(c)) for c in clusters[i]]
-
-    vertexAggregate = graph.getVertexAggregate(XConv, clusters)
-    c1 = matrix.Vector(2, [1] * 2)
-
-    #print(vertexAggregate.multVec(c1))
-    
-    A = g.getVertexEdge().multMat(g.edgeVertex)
     coarse = graph.formCoarse(vertexAggregate, L)
-    
+
+
     if d == 2:
         visualizeClusters2d(X, vertexAggregate)
     elif d == 3:
         visualizeClusters3d(X, vertexAggregate)
     else:
-        print("Can't display 4d :(")    
+        print("Can't display 4d :(")
 
     if p:
         vertexAggregate.visualizeShape()
