@@ -3,7 +3,7 @@ from math import sqrt
 import random
 
 #0 if matrix indicies start at 0, 1 if indicies start at 1
-offset = 0
+offset = 1
 
 class Vector:
     def __init__(self, dim, data = None):
@@ -285,14 +285,17 @@ class Sparse(_Matrix):
         for line in file:
             temp = line.split()
             row, column = int(temp[0]), int(temp[1])
+            row -= offset
+            column -= offset
+
             num = float(temp[2]) if len(temp) == 3 else None
 
             entry = (row, column, num) if num else (row, column)
 
             if not graph:
-                entries[row - offset].append(entry)
+                entries[row].append(entry)
             elif graph and row != column:
-                entries[row - offset].append(entry)
+                entries[row].append(entry)
 
         if len(entries[0]) == 2 or relation:
             binary = True

@@ -96,7 +96,7 @@ def formCoarse(P, A):
 def formVertexToK1Aggregate(Ps, k):
     if k > len(Ps):
         raise Exception("Not enough relations")
-    
+
     pi = Ps[0]
 
     for i in range(1, k):

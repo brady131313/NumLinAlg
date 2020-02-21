@@ -25,16 +25,16 @@ def hw4(filename, r, tau, p):
     print(f"{len(clusters)} clusters, {efficiency} efficiency")
 
     if not r: return
-    
+
     print("\n-- RECURSIVE --")
     
     As, Ps = cluster.recursiveLubys(g, tau)
+    print(len(As), len(Ps))
 
-    k = 3
+    k = len(Ps)
     Pk = graph.formVertexToK1Aggregate(Ps, k)
 
     (Pk.transpose().multMat(As[0]).multMat(Pk)).visualizeShape()
-
     As[k].visualizeShape()
 
 
