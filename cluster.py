@@ -2,6 +2,73 @@ import random
 import numpy as np
 
 import matrix
+import graph
+
+def recursiveLubys(g, tau):
+    A = g.adjacency
+
+    As = [A]
+    Ps = []
+
+    while True:
+        E = graph.fromAdjacencyToEdge(As[-1])
+        
+        data = [random.random() for _ in range(E.rows)]
+        w = matrix.Vector(E.rows, data)
+
+        clusters = lubys(E, w)
+
+        Ps.append(graph.getVertexAggregate2(E.columns, clusters))
+        As.append(graph.formCoarse(Ps[-1], As[-1]))
+        print(As[0].rows, As[-1].rows)
+
+        if As[0].rows >= tau * As[-1].rows or As[-1].rows == 1:
+            break
+
+    return [As, Ps]
+
+def lubys(E, w):
+    if E.rows != w.dim:
+        raise Exception(f"Dimension mismatch: {E.rows}x{E.columns} * {w.dim}x1")
+
+    edgeEdge = E.multMat(E.transpose())
+
+    clusters = []
+    accounted = set()
+
+    for i in range(E.rows):
+        edge = E.colInd[E.rowPtr[i]:E.rowPtr[i + 1]]
+        weight = w.data[i]
+
+        edgeNeighbors = _findEdgeNeighbors(i, edgeEdge)
+
+        if (_isLargestEdge(i, edgeNeighbors, w)):
+            clusters.append(edge)
+            accounted.add(edge[0])
+            accounted.add(edge[1])
+
+    for v in range(E.columns):
+        if v not in accounted:
+            clusters.append([v])
+
+    return clusters
+
+def _isLargestEdge(edge, neighbors, weights):
+    for e in neighbors:
+        if weights.data[e] > weights.data[edge]:
+            return False
+
+    return True
+
+def _findEdgeNeighbors(e, edgeEdge):
+    neighbors = []
+    for k in range(edgeEdge.rowPtr[e], edgeEdge.rowPtr[e + 1]):
+        j = edgeEdge.colInd[k]
+        if e != j:
+            neighbors.append(j)
+
+    return neighbors
+        
 
 def kMeans(X, K, d, maxIter, tolerance):
     centers = random.choices(X, k=K)
@@ -49,7 +116,7 @@ def _updateCenters(aggregates, d):
         
         if len(aggregates[r]) == 0:
             raise Exception("Empty Cluster")
-        
+
         newCenter = newCenter * (1 / len(aggregates[r]))
         centers[r] = newCenter
     

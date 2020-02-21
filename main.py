@@ -6,6 +6,7 @@ import graph
 import decomp
 import solvers
 import util
+import cluster
 
 def main():
     start = time.time()
@@ -13,15 +14,17 @@ def main():
         g = graph.Graph.fromFile(file)
     end = time.time()
 
-    #TODO for some reason EtE != D + A
-    #Perhaps I'm finding either the edge_vertex matrix wrong
-    #Maybe degree matrix is found wrong?
+    w = g.getRandomWeights()
 
-    L = g.getLaplacian()
+    clusters = cluster.lubys(g.edgeVertex, w)
+    print(clusters)
+    
+    P = graph.getVertexAggregate2(g.adjacency.rows, clusters)
+    coarse = graph.formCoarse(P, g.adjacency)
 
-    print(g.getDegree())
-    print(g.adjacency)
-    print(L)
+    P.visualizeShape()
+    print(coarse)
+
 
     print(f"Total operation time: {end - start}")
 

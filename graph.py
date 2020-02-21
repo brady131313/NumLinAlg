@@ -1,5 +1,6 @@
 from operator import itemgetter
 import numpy as np
+import random
 
 import matrix
 import decomp
@@ -39,7 +40,27 @@ class Graph:
                     L.data[k] = - L.data[k]
 
         return L
+    
+    def getRandomWeights(self):
+        data = [random.random() for _ in range(self.edgeVertex.rows)]
+        return matrix.Vector(self.edgeVertex.rows, data)
 
+
+def getVertexAggregate2(vertcies, clusters):
+    data = []
+    colInd = []
+    rowPtr = [0]
+    nnz = 0
+
+    for i in range(vertcies):
+        for j in range(len(clusters)):
+            if i in clusters[j]:
+                data.append(1)
+                colInd.append(j)
+                nnz += 1
+                rowPtr.append(nnz)
+    
+    return matrix.Sparse(nnz, len(clusters), data, colInd, rowPtr)
 
 def getVertexAggregate(X, clusters):
     data = []
@@ -72,6 +93,35 @@ def formCoarse(P, A):
     return P.transpose().multMat(A).multMat(P)
 
 
+def formVertexToK1Aggregate(Ps, k):
+    if k > len(Ps):
+        raise Exception("Not enough relations")
+    
+    pi = Ps[0]
+
+    for i in range(1, k):
+        pi = pi.multMat(Ps[i])
+
+    return pi
+
+
+def fromAdjacencyToEdge(A):
+    duplicates = set()
+    entries = []
+
+    for i in range(A.rows):
+        for k in range(A.rowPtr[i], A.rowPtr[i + 1]):
+            j = A.colInd[k]
+            entry = (i, j)
+
+            if entry not in duplicates and entry[::-1] not in duplicates and entry[0] != [1]:
+                duplicates.add(entry)
+                entries.append(sorted(entry))
+
+    entries = sorted(entries, key=itemgetter(0))
+
+    return _processEntries(len(entries), A.columns, entries)
+
 def fromFileToEdge(file):
     data = []
     colInd = []
@@ -97,6 +147,14 @@ def fromFileToEdge(file):
     #Sort entries by row so they can be added to CSR 
     entries = sorted(entries, key=itemgetter(0))
     
+    return _processEntries(len(entries), columns, entries)
+
+def _processEntries(rows, columns, entries):
+    data = []
+    colInd = []
+    rowPtr = []
+    nnz = 0
+
     for i, entry in enumerate(entries):
         rowPtr.append(nnz)
 
@@ -107,10 +165,9 @@ def fromFileToEdge(file):
         colInd.append(entry[1])
 
         nnz += 2
-    
-    rowPtr.append(nnz)    
+    rowPtr.append(nnz)
 
-    return matrix.Sparse(len(entries), columns, data, colInd, rowPtr)
+    return matrix.Sparse(rows, columns, data, colInd, rowPtr)
 
         
 
