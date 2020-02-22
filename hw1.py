@@ -6,13 +6,13 @@ import numpy as np
 from scipy import linalg
 
 import util
-import matrix
-import solvers
+from matrix import Sparse, Dense, Vector
+from linalg import forwardSparse, backwardSparse
 
 def hw1(fileName, display):
     start = time.time()
     with open(util.getMatrixFile(fileName)) as file:
-        A = matrix.Dense.fromFile(file)
+        A = Dense.fromFile(file)
     end = time.time()
 
     print(f"Time to read matrix from file was {end - start} seconds")
@@ -30,14 +30,14 @@ def hw1(fileName, display):
 
     #Convert to CSR format used in my library
     start = time.time()
-    L = matrix.Sparse.fromDense(matrix.Dense(L.shape[0], L.shape[1], L.tolist()))
-    U = matrix.Sparse.fromDense(matrix.Dense(U.shape[0], U.shape[1], U.tolist()))
+    L = Sparse.fromDense(Dense(L.shape[0], L.shape[1], L.tolist()))
+    U = Sparse.fromDense(Dense(U.shape[0], U.shape[1], U.tolist()))
     end = time.time()
 
     print(f"Time to convert matricies to CSR was {end - start} seconds")
 
     #Generate random solution vector
-    x = matrix.Vector.fromRandom(L.columns, 0, 5)
+    x = Vector.fromRandom(L.columns, 0, 5)
 
     #Resulting b matrix times x vector
     bL = L.multVec(x)
@@ -45,7 +45,7 @@ def hw1(fileName, display):
 
     #Solve lower triangular system
     start = time.time()
-    r1 = solvers.forwardSparse(L, bL)
+    r1 = forwardSparse(L, bL)
     end = time.time()
 
     print(f"Time to solve lower system was {end - start} seconds")
@@ -54,7 +54,7 @@ def hw1(fileName, display):
 
     #Solve upper triangular system
     start = time.time()
-    r2 = solvers.backwardSparse(U, bU)
+    r2 = backwardSparse(U, bU)
     end = time.time()
 
     print(f"Time to solve upper system was {end - start} seconds")

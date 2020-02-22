@@ -8,9 +8,7 @@ import argparse
 import time
 
 import util
-import graph
-import cluster
-import matrix
+from graph import Graph, getVertexAggregate, formCoarse, kMeans
 
 def formCoordinateVectors(L, d):
     converted = csr_matrix((L.data, L.colInd, L.rowPtr), (L.rows, L.columns))
@@ -59,7 +57,7 @@ def visualizeClusters3d(X, P):
 
 def hw3(filename, K, d, maxIter, tolerance, p):
     with open(util.getMatrixFile(filename)) as file:
-        g = graph.Graph.fromFile(file)
+        g = Graph.fromFile(file)
 
     #if K > g.adjacency.rows or d < K or d > g.adjacency.rows:
     #    raise Exception("k << n, d >= k, d < n must hold")
@@ -67,18 +65,18 @@ def hw3(filename, K, d, maxIter, tolerance, p):
     L = g.getLaplacian()
     X = formCoordinateVectors(L, d)
 
-    clusters, iterations, delta = cluster.kMeans(X, K, d, maxIter, tolerance)
+    clusters, iterations, delta = kMeans(X, K, d, maxIter, tolerance)
     print(f"{iterations} iterations to find clusters")
 
     for i in range(len(clusters)):
         print(f"|A{i + 1}| = {len(clusters[i])}")
 
     start = time.time()
-    vertexAggregate = graph.getVertexAggregate(X, clusters)
+    vertexAggregate = getVertexAggregate(X, clusters)
     end = time.time()
     print(f"Elapsed: {end - start}")
 
-    coarse = graph.formCoarse(vertexAggregate, L)
+    coarse = formCoarse(vertexAggregate, L)
 
 
     if d == 2:

@@ -3,39 +3,39 @@ import time
 import argparse
 
 import util
-import matrix
-import solvers
+from matrix import Sparse, Vector
+from linalg import IterMatrix, stationaryIterative
 
 def hw2(fileName, maxIter, tolerance, iterMatrix, display, displayResidual):
     start = time.time()
     with open(util.getMatrixFile(fileName)) as file:
-        A = matrix.Sparse.fromFile(file)
+        A = Sparse.fromFile(file)
     end = time.time()
 
     print(f"Time to read matrix from file was {end - start} seconds")
 
     #Generate random solution vector
-    x = matrix.Vector.fromRandom(A.columns, 0, 5)
+    x = Vector.fromRandom(A.columns, 0, 5)
     b = A.multVec(x)
 
     #Generate first iteration
-    xInit = matrix.Vector(A.columns)
+    xInit = Vector(A.columns)
 
     #Get proper iteration matrix
     if iterMatrix.lower() == "l1":
-        iterMatrix = solvers.IterMatrix.l1Smoother
+        iterMatrix = IterMatrix.l1Smoother
     elif iterMatrix.lower() == "fgs":
-        iterMatrix = solvers.IterMatrix.forwardGaussSeidel
+        iterMatrix = IterMatrix.forwardGaussSeidel
     elif iterMatrix.lower() == "bgs":
-        iterMatrix = solvers.IterMatrix.backwardGaussSeidel
+        iterMatrix = IterMatrix.backwardGaussSeidel
     elif iterMatrix.lower() == "sgs":
-        iterMatrix = solvers.IterMatrix.symmetricGaussSeidel
+        iterMatrix = IterMatrix.symmetricGaussSeidel
     else:
         raise Exception("No valid iteration matrix selected")
 
     #Solve system using stationary iterative method
     start = time.time()
-    xResult, iterations, residual = solvers.stationaryIterative(A, b, xInit, maxIter, tolerance, iterMatrix, displayResidual)
+    xResult, iterations, residual = stationaryIterative(A, b, xInit, maxIter, tolerance, iterMatrix, displayResidual)
     end = time.time()
 
     if display:
