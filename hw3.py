@@ -1,59 +1,17 @@
 from scipy.sparse.linalg import eigsh
 from scipy.sparse import csr_matrix
+
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
+
 import numpy as np
 import argparse
 import time
 
 import util
+import plot
 from graph import Graph, getVertexAggregate, formCoarse, kMeans
-
-def formCoordinateVectors(L, d):
-    converted = csr_matrix((L.data, L.colInd, L.rowPtr), (L.rows, L.columns))
-    converted = converted.asfptype()
-    
-    eigs, vecs = eigsh(converted, d, which='SM', tol=1e-3)
-    return vecs
-
-def getColors(X, P):
-    colors = [0 for _ in range(len(X))]
-
-    for i in range(P.rows):
-        for k in range(P.rowPtr[i], P.rowPtr[i + 1]):
-            j = P.colInd[k]
-            #colors[i] = 1 - (1/(1 + j))
-            colors[i] = j
-
-    colorMap = cm.get_cmap('Dark2')
-    return colorMap(colors)
-
-def visualizeClusters2d(X, P):
-    xCoords = [x[0] for x in X]
-    yCoords = [x[1] for x in X]
-    colors = getColors(X, P)
-
-    size, alpha = (75, 0.4) if len(xCoords) < 1250 else (50, 0.2)
-    
-    plt.scatter(xCoords, yCoords, c=colors, s=size, alpha=alpha, marker="o")
-
-    plt.show()
-
-def visualizeClusters3d(X, P):
-    xCoords = [x[0] for x in X]
-    yCoords = [x[1] for x in X]
-    zCoords = [x[2] for x in X]
-    colors = getColors(X, P)
-    
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-
-    size, alpha = (75, 0.4) if len(xCoords) < 1250 else (50, 0.2)
-
-    ax.scatter(xCoords, yCoords, zCoords, c=colors, s=size, alpha=alpha)
-
-    plt.show()
 
 def hw3(filename, K, d, maxIter, tolerance, p):
     with open(util.getMatrixFile(filename)) as file:
@@ -63,7 +21,7 @@ def hw3(filename, K, d, maxIter, tolerance, p):
     #    raise Exception("k << n, d >= k, d < n must hold")
 
     L = g.getLaplacian()
-    X = formCoordinateVectors(L, d)
+    X = plot.formCoordinateVectors(L, d)
 
     clusters, iterations, delta = kMeans(X, K, d, maxIter, tolerance)
     print(f"{iterations} iterations to find clusters")
@@ -78,11 +36,8 @@ def hw3(filename, K, d, maxIter, tolerance, p):
 
     coarse = formCoarse(vertexAggregate, L)
 
-
-    if d == 2:
-        visualizeClusters2d(X, vertexAggregate)
-    elif d == 3:
-        visualizeClusters3d(X, vertexAggregate)
+    if d == 2 or d == 3:
+        plot.visualize(X, vertexAggregate, d)
     else:
         print("Can't display 4d :(")
 

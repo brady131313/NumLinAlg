@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-offset = 1
+offset = 0
 
 class Base(ABC):
     def __init__(self, rows, columns):
@@ -28,7 +28,7 @@ class Base(ABC):
         pass
 
     def visualizeShape(self):
-        str = ""
+        str = f"{self.rows}x{self.columns}"
         for i in range(self.rows):
             str += "\n"
             for j in range(self.columns):

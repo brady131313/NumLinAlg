@@ -4,7 +4,7 @@ import numpy as np
 from matrix import Vector
 from graph import *
 
-def recursiveLubys(g, tau):
+def recursiveLubys(g, tau, modularity):
     A = g.adjacency
 
     As = [A]
@@ -12,17 +12,20 @@ def recursiveLubys(g, tau):
 
     while True:
         E = fromAdjacencyToEdge(As[-1])
-        
-        data = [random.random() for _ in range(E.rows)]
-        w = Vector(E.rows, data)
 
-        clusters = lubys(E, w)
+        if modularity:
+            w = modularityWeights(As[-1], E)
+        else:
+            data = [random.random() for _ in range(E.rows)]
+            w = Vector(E.rows, data)
 
-        Ps.append(getVertexAggregate2(E.columns, clusters))
+        P = lubys(E, w)
+
+        Ps.append(P)
         As.append(formCoarse(Ps[-1], As[-1]))
         print(As[0].rows, As[-1].rows)
 
-        if As[0].rows >= tau * As[-1].rows or As[-1].rows == 1:
+        if As[0].rows >= tau * As[-1].rows or As[-1].rows == 1 or As[-1].rows == As[-2].rows:
             break
 
     return [As, Ps]
@@ -30,11 +33,12 @@ def recursiveLubys(g, tau):
 def lubys(E, w):
     if E.rows != w.dim:
         raise Exception(f"Dimension mismatch: {E.rows}x{E.columns} * {w.dim}x1")
+    
+    Et = E.transpose()
+    edgeEdge = E.multMat(Et)
 
-    edgeEdge = E.multMat(E.transpose())
-
-    clusters = []
-    accounted = set()
+    labels = [-1 for _ in range(E.rows)]
+    matchingCounter = 0
 
     for i in range(E.rows):
         edge = E.colInd[E.rowPtr[i]:E.rowPtr[i + 1]]
@@ -42,20 +46,40 @@ def lubys(E, w):
 
         edgeNeighbors = _findEdgeNeighbors(i, edgeEdge)
 
-        if (_isLargestEdge(i, edgeNeighbors, w)):
-            clusters.append(edge)
-            accounted.add(edge[0])
-            accounted.add(edge[1])
+        if _isLargestEdge(i, edgeNeighbors, w):
+            labels[i] = matchingCounter
+            matchingCounter += 1
+    
+    return _formVertexAggregate(labels, matchingCounter, Et)
 
-    for v in range(E.columns):
-        if v not in accounted:
-            clusters.append([v])
+def _formVertexAggregate(labels, matchingCounter, vertexEdge):
+    data = [1 for _ in range(vertexEdge.rows)]
+    colInd = [-1 for _ in range(vertexEdge.rows)]
+    rowPtr = [0]
+    nnz = 0
 
-    return clusters
+    aggregateCounter = matchingCounter
+
+    for i in range(vertexEdge.rows):
+        edges = vertexEdge.colInd[vertexEdge.rowPtr[i]:vertexEdge.rowPtr[i + 1]]
+
+        for e in edges:
+            if labels[e] > -1:
+                colInd[i] = labels[e]
+                nnz += 1
+                rowPtr.append(nnz)
+        
+        if colInd[i] == -1:
+            colInd[i] = aggregateCounter
+            nnz += 1
+            rowPtr.append(nnz)
+            aggregateCounter += 1
+
+    return Sparse(vertexEdge.rows, aggregateCounter, data, colInd, rowPtr)
 
 def _isLargestEdge(edge, neighbors, weights):
     for e in neighbors:
-        if weights.data[e] > weights.data[edge]:
+        if weights.data[e] >= weights.data[edge]:
             return False
 
     return True

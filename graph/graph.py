@@ -45,22 +45,23 @@ class Graph:
         data = [random.random() for _ in range(self.edgeVertex.rows)]
         return Vector(self.edgeVertex.rows, data)
 
+def modularityWeights(A, E):
+    degree = [0 for _ in range(A.rows)]
 
-def getVertexAggregate2(vertcies, clusters):
-    data = []
-    colInd = []
-    rowPtr = [0]
-    nnz = 0
+    for i in range(len(degree)):
+        degree[i] = sum(A.data[A.rowPtr[i]:A.rowPtr[i + 1]])
 
-    for i in range(vertcies):
-        for j in range(len(clusters)):
-            if i in clusters[j]:
-                data.append(1)
-                colInd.append(j)
-                nnz += 1
-                rowPtr.append(nnz)
+    T = sum(degree)
     
-    return Sparse(nnz, len(clusters), data, colInd, rowPtr)
+    weights = [0 for _ in range(E.rows)]
+
+    for k in range(E.rows):
+        i, j = E.colInd[E.rowPtr[k]:E.rowPtr[k + 1]]
+        
+        weights[k] = 1 - ((degree[i] * degree[j]) / T)
+        weights[k] /= T
+    
+    return Vector(len(weights), weights)
 
 def getVertexAggregate(X, clusters):
     data = []
