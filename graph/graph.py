@@ -58,7 +58,8 @@ def modularityWeights(A, E):
     for k in range(E.rows):
         i, j = E.colInd[E.rowPtr[k]:E.rowPtr[k + 1]]
         
-        weights[k] = 1 - ((degree[i] * degree[j]) / T)
+        weights[k] = A.getValue(i, j) - ((degree[i] * degree[j]) / T)
+        #weights[k] = 1 - ((degree[i] * degree[j]) / T)
         weights[k] /= T
     
     return Vector(len(weights), weights)

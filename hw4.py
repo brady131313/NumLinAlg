@@ -8,7 +8,7 @@ from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
 
 from graph.graph import *
-from graph import lubys, recursiveLubys
+from graph import lubys, recursiveLubys, QModularity, modularityMatrix
 import util
 import plot
 
@@ -24,13 +24,14 @@ def single(filename, modularity, printResult, visualize, d):
     P = lubys(g.edgeVertex, w)
     coarse = formCoarse(P, g.adjacency)
 
-    efficiency = (g.adjacency.rows / 2) / P.columns
+    Q = QModularity(g.adjacency, P)
+    B = modularityMatrix(g.adjacency)
 
     if printResult:
         P.visualizeShape()
         print(coarse)
 
-    print(f"{P.columns} clusters, {efficiency} efficiency")
+    print(f"{P.columns} clusters, Q = {Q}")
 
     if visualize:
         L = g.getLaplacian()

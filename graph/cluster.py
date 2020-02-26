@@ -1,8 +1,48 @@
 import random
 import numpy as np
 
-from matrix import Vector
+from matrix import Vector, Dense
 from graph import *
+
+def QModularity(A, P):
+    degree = [0 for _ in range(A.rows)]
+
+    for i in range(len(degree)):
+        degree[i] = sum(A.data[A.rowPtr[i]:A.rowPtr[i + 1]])
+
+    T = sum(degree)
+    Pt = P.transpose()
+
+    Q = 0
+    for aggregate in range(Pt.rows):
+        vertcies = Pt.colInd[Pt.rowPtr[aggregate]:Pt.rowPtr[aggregate + 1]]
+        
+        for i in vertcies:
+            for j in vertcies:
+                Q += A.getValue(i, j) - ((degree[i] * degree[j]) / T)
+
+    Q /= T
+    
+    return Q
+
+def modularityMatrix(A):
+    degree = Dense(A.rows, A.rows)
+    for i in range(A.rows):
+        degree.data[0][i] = sum(A.data[A.rowPtr[i]:A.rowPtr[i + 1]])
+
+    T = sum(degree.data[0])
+
+    ddt = degree.transpose().multMat(degree)
+    ddt = ddt.scale(-1 / T)
+
+    for i in range(A.rows):
+        for k in range(A.rowPtr[i], A.rowPtr[i + 1]):
+            j = A.colInd[k]
+
+            ddt.data[i][j] += A.data[k]
+    
+    B = ddt.scale(1 / T)
+    return B
 
 def recursiveLubys(g, tau, modularity):
     A = g.adjacency
