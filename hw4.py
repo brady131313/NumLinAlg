@@ -19,7 +19,7 @@ def single(filename, modularity, printResult, visualize, d):
     if modularity:
         w = modularityWeights(g.adjacency, g.edgeVertex)
     else:
-        w = g.getRandomWeights()
+        w = randomWeights(g.edgeVertex)
 
     P = lubys(g.edgeVertex, w)
     coarse = formCoarse(P, g.adjacency)

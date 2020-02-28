@@ -4,7 +4,7 @@ from scipy.sparse.linalg import splu
 import numpy as np
 
 from matrix import Dense, Sparse, Vector
-from graph import lubys, fromAdjacencyToEdge, formCoarse, randomWeights
+import graph
 from linalg.decomp import l1Smoother, diagonal
 import util
 
@@ -166,11 +166,11 @@ def sgsPreconditioner(A):
     return preconditioner
 
 def twolevelPreconditioner(A, method):
-    E = fromAdjacencyToEdge(A)
-    w = randomWeights(E)
+    E = graph.fromAdjacencyToEdge(A)
+    w = graph.randomWeights(E)
 
-    P = lubys(E, w)
-    coarse = formCoarse(P, A)
+    P = graph.lubys(E, w)
+    coarse = graph.formCoarse(P, A)
 
     if method == IterMatrix.l1Smoother:
         D = l1Smoother(A)
@@ -180,6 +180,7 @@ def twolevelPreconditioner(A, method):
             y = vectorSolver(D, r)
         elif method == IterMatrix.forwardGaussSeidel:
             y = forwardSparse(A, r)
+        else: raise Exception("M must be l1 or forward gauss seidel")
         
         rc = P.transpose().multVec(r - A.multVec(y))
         yc = _solveCoarse(coarse, rc)
