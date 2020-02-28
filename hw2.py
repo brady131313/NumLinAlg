@@ -41,8 +41,8 @@ def hw2(fileName, maxIter, tolerance, iterMatrix, display, displayResidual):
     if display:
         util.compareVectors(x, xResult)
 
-    print(f"Iterations = {iterations}, Residual = {residual} on exit")
-    print(f"Time to iteratively solve system was {end - start} seconds using {iterMatrix.name}")
+    print(f"\nIterations = {iterations}, Residual = {residual} on exit")
+    print(f"Time to iteratively solve system was {end - start} seconds using {iterMatrix.name}\n")
 
 
 

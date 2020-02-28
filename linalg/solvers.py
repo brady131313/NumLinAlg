@@ -1,6 +1,10 @@
 from enum import Enum
+from scipy.sparse import csr_matrix
+from scipy.sparse.linalg import splu
+import numpy as np
 
 from matrix import Dense, Sparse, Vector
+from graph import lubys, fromAdjacencyToEdge, formCoarse, randomWeights
 from linalg.decomp import l1Smoother, diagonal
 import util
 
@@ -145,3 +149,88 @@ def stationaryIterative(A, b, xInit, maxIter, tolerance, iterMatrix, displayResi
     print(f"Accuracy: {delta / deltaInit}")
 
     return [x, maxIter, delta]
+
+def diagonalPreconditioner(A): 
+    D = diagonal(A)
+
+    def preconditioner(r):
+        return vectorSolver(D, r) 
+    return preconditioner
+
+def sgsPreconditioner(A):
+    D = diagonal(A)
+
+    def preconditioner(r):
+        y = forwardSparse(A, r)
+        return backwardSparse(A, D.elementWiseMult(y))
+    return preconditioner
+
+def twolevelPreconditioner(A, method):
+    E = fromAdjacencyToEdge(A)
+    w = randomWeights(E)
+
+    P = lubys(E, w)
+    coarse = formCoarse(P, A)
+
+    if method == IterMatrix.l1Smoother:
+        D = l1Smoother(A)
+    
+    def preconditioner(r):
+        if method == IterMatrix.l1Smoother:
+            y = vectorSolver(D, r)
+        elif method == IterMatrix.forwardGaussSeidel:
+            y = forwardSparse(A, r)
+        
+        rc = P.transpose().multVec(r - A.multVec(y))
+        yc = _solveCoarse(coarse, rc)
+
+        y = y + P.multVec(yc)
+        z = backwardSparse(A, r - A.multVec(y))
+        return y + z
+    return preconditioner
+
+def _solveCoarse(A, r):
+    converted = csr_matrix((A.data, A.colInd, A.rowPtr), (A.rows, A.columns)).asfptype()
+
+    B = splu(converted.tocsc())
+    y = B.solve(np.array(r.data))
+
+    y = Vector(y.shape[0], list(y))
+    return y
+
+def pcg(A, b, x, maxIter, tolerance, preconditioner, displayResidual):
+    if not isinstance(A, Sparse):
+        raise Exception("Matrix A must be sparse")
+    if A.rows != A.columns or A.columns != b.dim:
+        raise Exception(f"A must be SPD")
+    if A.columns != b.dim:
+        raise Exception(f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector b is {b.dim}x1")
+
+    r = b - A.multVec(x)
+    pr = preconditioner(r)
+
+    deltaInit = r.dot(pr)
+    delta = deltaInit
+
+    p = pr
+
+    for i in range(maxIter):
+        g = A.multVec(p)
+        alpha = delta / (p.dot(g))
+
+        x = x + p.scale(alpha)
+        r = r - g.scale(alpha)
+        pr = preconditioner(r)
+
+        deltaOld = delta
+        delta = r.dot(pr)
+
+        if displayResidual: print(delta)
+
+        if delta < (tolerance ** 2) * deltaInit:
+            return [x, i, delta]
+
+        beta = delta / deltaOld
+        p = pr + p.scale(beta)
+    
+    return [x, i, delta]

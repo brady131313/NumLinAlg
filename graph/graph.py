@@ -41,9 +41,9 @@ class Graph:
 
         return L
     
-    def getRandomWeights(self):
-        data = [random.random() for _ in range(self.edgeVertex.rows)]
-        return Vector(self.edgeVertex.rows, data)
+def randomWeights(E):
+        data = [random.random() for _ in range(E.rows)]
+        return Vector(E.rows, data)
 
 def modularityWeights(A, E):
     degree = [0 for _ in range(A.rows)]
