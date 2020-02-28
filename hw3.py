@@ -11,14 +11,22 @@ import time
 
 import util
 import plot
-from graph import Graph, getVertexAggregate, formCoarse, kMeans
+from graph import Graph, getVertexAggregate, formCoarse, kMeans, QModularity
 
-def hw3(filename, K, d, maxIter, tolerance, p):
+def hw3(filename, K, d, maxIter, tolerance, p, G):
     with open(util.getMatrixFile(filename)) as file:
         g = Graph.fromFile(file)
 
     #if K > g.adjacency.rows or d < K or d > g.adjacency.rows:
     #    raise Exception("k << n, d >= k, d < n must hold")
+
+    if G:
+        g.adjacency.visualizeShape()
+        g.edgeVertex.visualizeShape()
+        g.getVertexEdge().visualizeShape()
+        print(g.getDegree())
+        g.getEdgeEdge().visualizeShape()
+        print(g.getLaplacian())
 
     L = g.getLaplacian()
     X = plot.formCoordinateVectors(L, d)
@@ -33,6 +41,9 @@ def hw3(filename, K, d, maxIter, tolerance, p):
     vertexAggregate = getVertexAggregate(X, clusters)
     end = time.time()
     print(f"Elapsed: {end - start}")
+
+    Q = QModularity(g.adjacency, vertexAggregate)
+    print(f"Q = {Q}")
 
     coarse = formCoarse(vertexAggregate, L)
 
@@ -52,10 +63,11 @@ parser.add_argument("-K", dest="K", default=2, action='store', type=int, help="P
 parser.add_argument("-i", dest="maxIter", default=1000, action='store', type=int, help="Max number of iterations")
 parser.add_argument("-t", dest="tolerance", default=1e-6, action='store', type=float, help="Tolerance needed for convergence")
 parser.add_argument("-p", dest="p", action='store_true', help="Display matricies")
+parser.add_argument("-G", dest="G", action='store_true', help="Display graphs")
 args = parser.parse_args()
 
 if not args.filename or len(args.filename) == 0:
     print("Grahp filename must be supplied")
 else:
-    hw3(args.filename, args.K, args.d, args.maxIter, args.tolerance, args.p)
+    hw3(args.filename, args.K, args.d, args.maxIter, args.tolerance, args.p, args.G)
 

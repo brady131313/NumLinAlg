@@ -25,7 +25,7 @@ def single(filename, modularity, printResult, visualize, d):
     coarse = formCoarse(P, g.adjacency)
 
     Q = QModularity(g.adjacency, P)
-    B = modularityMatrix(g.adjacency)
+    #B = modularityMatrix(g.adjacency)
 
     if printResult:
         P.visualizeShape()
@@ -45,7 +45,14 @@ def recursive(filename, tau, modularity, printResult, visualize, d):
     As, Ps = recursiveLubys(g, tau, modularity)
 
     Pk = formVertexToK1Aggregate(Ps, len(Ps))
-    print(f"{Pk.columns} clusters")
+    Q = QModularity(As[0], Pk)
+
+    print(f"{Pk.columns} clusters, Q = {Q}")
+
+    if printResult:
+        Pk.visualizeShape()
+        print(len(As))
+        print(As[-1])
 
     if visualize:
         L = g.getLaplacian()

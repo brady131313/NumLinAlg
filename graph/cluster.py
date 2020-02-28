@@ -19,7 +19,9 @@ def QModularity(A, P):
         
         for i in vertcies:
             for j in vertcies:
-                Q += A.getValue(i, j) - ((degree[i] * degree[j]) / T)
+                q = A.getValue(i, j) - ((degree[i] * degree[j]) / T)
+                #print(q, A.getValue(i, j))
+                Q += q
 
     Q /= T
     
@@ -122,7 +124,7 @@ def _isLargestEdge(edge, neighbors, weights):
         if weights.data[e] >= weights.data[edge]:
             return False
 
-    return True
+    return weights.data[edge] >= 0
 
 def _findEdgeNeighbors(e, edgeEdge):
     neighbors = []

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-offset = 0
+offset = 1
 
 class Base(ABC):
     def __init__(self, rows, columns):
