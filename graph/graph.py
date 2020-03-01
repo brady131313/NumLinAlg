@@ -115,9 +115,10 @@ def formVertexToK1Aggregate(Ps, k):
     return pi
 
 
-def fromAdjacencyToEdge(A):
+def fromAdjacencyToEdge(A, rand):
     duplicates = set()
     entries = []
+    w = []
 
     for i in range(A.rows):
         for k in range(A.rowPtr[i], A.rowPtr[i + 1]):
@@ -125,13 +126,17 @@ def fromAdjacencyToEdge(A):
             entry = (i, j)
 
             #BUG something breaks when [1] -> entry[1]
-            if entry not in duplicates and entry[::-1] not in duplicates and entry[0] != [1]:
+            if entry not in duplicates and entry[::-1] not in duplicates and entry[0] != entry[1]:
                 duplicates.add(entry)
                 entries.append(sorted(entry))
+                if rand:
+                    w.append(random.random())
+                else: 
+                    w.append(A.data[k])
 
     entries = sorted(entries, key=itemgetter(0))
 
-    return _processEntries(len(entries), A.columns, entries)
+    return [_processEntries(len(entries), A.columns, entries), Vector(len(w), w)]
 
 def fromFileToEdge(file):
     data = []

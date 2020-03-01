@@ -56,9 +56,12 @@ def recursiveLouvains(g):
 
     while True:
         QOld = Q
-        E = fromAdjacencyToEdge(As[-1])
+        rand = len(As) == 1 and False
+        E, w = fromAdjacencyToEdge(As[-1], rand)
 
-        P, Q, i = louvains(As[-1], E, 5)
+        #P, Q, i = louvains(As[-1], E, 5)
+        P = louvains2(As[-1], E, w)
+        Q = QModularity(As[-1], P)
 
         Ps.append(P)
         As.append(formCoarse(Ps[-1], As[-1]))
@@ -71,6 +74,74 @@ def recursiveLouvains(g):
             break
     
     return [As, Ps]
+
+def louvains2(A, E, w):
+    Et = E.transpose()
+    P = _formVertexAggregate([-1 for _ in range(E.rows)], 0, Et)
+
+    QOld = -1
+    Q = QModularity(A, P)
+    
+    #while abs(Q - QOld) != 0:
+    for k in range(2):
+        QOld = Q
+        
+        start = time.time()
+        for i in range(P.rows):
+            neighbors = _findVertexNeighbors(i, A)
+            if len(neighbors) == 0: continue
+            '''P.visualizeShape()
+            oldCluster = P.colInd[P.rowPtr[i]]
+            if P.colInd.count(oldCluster) > 1:
+                columnSet = set(P.colInd)
+                for count, col in enumerate(columnSet):
+                    if count != col: 
+                        P.colInd[P.rowPtr[i]] = count
+                        break
+            '''
+            edgeAggregate = E.multMat(P)
+
+            clusters = [P.colInd[P.rowPtr[j]] for j in neighbors]
+            dQs = [deltaQ(i, j, edgeAggregate, E, Et, w) for j in clusters]
+            
+            maxDq = max(dQs)
+            Q += maxDq
+
+            newCluster = clusters[dQs.index(maxDq)]
+            if maxDq > 0:
+                P.colInd[P.rowPtr[i]] = newCluster
+        end = time.time()
+        print(f"Time through vercies: {end - start}")
+        
+    print("Done with this iteration")
+    return _reformAggregates(P)
+
+def deltaQ(vertex, C, edgeAggregate, E, Et, w):
+    aggregateEdge = edgeAggregate.transpose()
+
+    edgesInC = []
+    edgesIncidentC = []
+    degreeIIncidentC = []
+    degreeI = Et.colInd[Et.rowPtr[vertex]:Et.rowPtr[vertex + 1]]
+
+    search = slice(aggregateEdge.rowPtr[C], aggregateEdge.rowPtr[C + 1])
+    for entry, edge in zip(aggregateEdge.data[search], aggregateEdge.colInd[search]):
+        if entry > 1: edgesInC.append(edge)
+        elif entry == 1: 
+            vertexPair = E.colInd[E.rowPtr[edge]:E.rowPtr[edge + 1]]
+            if vertexPair[0] == vertex or vertexPair[1] == vertex:
+                degreeIIncidentC.append(edge)
+            edgesIncidentC.append(edge)
+
+    edgesInC = sum([w.data[i] for i in edgesInC])
+    edgesIncidentC = sum([w.data[i] for i in edgesIncidentC])
+    degreeI = sum([w.data[i] for i in degreeI])
+    degreeIIncidentC = sum([w.data[i] for i in degreeIIncidentC])
+    m = sum(w.data)
+
+    dQ = ((edgesInC + degreeIIncidentC) / (2 * m)) - ((edgesIncidentC + degreeI) / (2 * m)) ** 2
+    dQ -= ((edgesInC / (2 * m)) - (edgesIncidentC / (2 * m)) ** 2 - (degreeI / (2 * m)) ** 2)
+    return dQ
 
 def louvains(A, E, maxIter):
     Et = E.transpose()
