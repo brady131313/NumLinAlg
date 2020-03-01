@@ -37,6 +37,7 @@ def single(filename, modularity, printResult, visualize, d):
         L = g.getLaplacian()
         X = plot.formCoordinateVectors(L, d)
         plot.visualize(X, P, d)
+        #plot.visualizeGraph(g.edgeVertex, P, w.data)
 
 def recursive(filename, tau, modularity, printResult, visualize, d):
     with open(util.getMatrixFile(filename)) as file:
@@ -57,8 +58,8 @@ def recursive(filename, tau, modularity, printResult, visualize, d):
     if visualize:
         L = g.getLaplacian()
         X = plot.formCoordinateVectors(L, d)
-        plot.visualize(X, Pk, d)
-
+        #plot.visualize(X, Pk, d)
+        plot.visualizeGraph(g.edgeVertex, Pk)
 
 
 parser = argparse.ArgumentParser()

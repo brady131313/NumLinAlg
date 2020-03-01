@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import time
 
 from matrix import Vector, Dense
 from graph import *
@@ -46,6 +47,85 @@ def modularityMatrix(A):
     B = ddt.scale(1 / T)
     return B
 
+def recursiveLouvains(g):
+    A = g.adjacency
+
+    As = [A]
+    Ps = []
+    Q = -1
+
+    while True:
+        QOld = Q
+        E = fromAdjacencyToEdge(As[-1])
+
+        P, Q, i = louvains(As[-1], E, 5)
+
+        Ps.append(P)
+        As.append(formCoarse(Ps[-1], As[-1]))
+
+        print(As[-1].rows, Q)
+
+        B = modularityMatrix(As[-1])
+        #if isLaplacian(B): break
+        if abs(Q - QOld) == 0: 
+            break
+    
+    return [As, Ps]
+
+def louvains(A, E, maxIter):
+    Et = E.transpose()
+    P = _formVertexAggregate([-1 for _ in range(E.rows)], 0, Et)
+    Q = -1
+
+    for iterations in range(maxIter):
+        QOld = Q
+        start = time.time()
+        for i in range(P.rows):
+            Qi = QModularity(A, P)
+
+            neighbors = _findVertexNeighbors(i, A)
+            iCluster = P.colInd[P.rowPtr[i]]
+            
+            for j in neighbors:
+                jCluster = P.colInd[P.rowPtr[j]]
+                P.colInd[P.rowPtr[i]] = jCluster
+
+                Qj = QModularity(A, P)
+                
+                if Qi >= Qj:
+                    P.colInd[P.rowPtr[i]] = iCluster
+        end = time.time()
+        print(f"Time through vertcies: {end - start}")
+        Q = QModularity(A, P)
+
+        if abs(QOld - Q) == 0 and iterations > 0:
+            print("Convergence")
+            break
+    
+    P = _reformAggregates(P)
+    return [P, Q, iterations]
+            
+def _reformAggregates(P):
+    columnSet = set(P.colInd)
+    columns = len(columnSet)
+    columnList = list(columnSet)
+    offsets = [- columnList[0]]
+
+    for i in range(1, columns):
+        offsets.append(-offsets[-1] - (columnList[i] - offsets[-1] - i))
+
+    offsetMap = {}
+    for column, offset in zip(columnList, offsets):
+        offsetMap[column] = offset
+
+    P.colInd = [i + offsetMap[i] for i in P.colInd]
+    P.columns = columns
+    return P
+
+def _findVertexNeighbors(i, A):
+    neighbors = A.colInd[A.rowPtr[i]:A.rowPtr[i + 1]]
+    return neighbors
+
 def recursiveLubys(g, tau, modularity):
     A = g.adjacency
 
@@ -67,7 +147,11 @@ def recursiveLubys(g, tau, modularity):
         As.append(formCoarse(Ps[-1], As[-1]))
         print(As[0].rows, As[-1].rows)
 
-        if As[0].rows >= tau * As[-1].rows or As[-1].rows == 1 or As[-1].rows == As[-2].rows:
+        #B = modularityMatrix(As[-1])
+        #if not isLaplacian(B):
+        #    break
+
+        if As[0].rows >= tau * As[-1].rows or As[-1].rows <= 2 or As[-1].rows == As[-2].rows:
             break
 
     return [As, Ps]
@@ -77,6 +161,7 @@ def lubys(E, w):
         raise Exception(f"Dimension mismatch: {E.rows}x{E.columns} * {w.dim}x1")
     
     Et = E.transpose()
+    
     edgeEdge = E.multMat(Et)
 
     labels = [-1 for _ in range(E.rows)]
@@ -103,7 +188,8 @@ def _formVertexAggregate(labels, matchingCounter, vertexEdge):
     aggregateCounter = matchingCounter
 
     for i in range(vertexEdge.rows):
-        edges = vertexEdge.colInd[vertexEdge.rowPtr[i]:vertexEdge.rowPtr[i + 1]]
+        search = slice(vertexEdge.rowPtr[i], vertexEdge.rowPtr[i + 1])
+        edges = vertexEdge.colInd[search]
 
         for e in edges:
             if labels[e] > -1:

@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
 
+import networkx as nx
+
 def formCoordinateVectors(L, d):
     converted = csr_matrix((L.data, L.colInd, L.rowPtr), (L.rows, L.columns))
     converted = converted.asfptype()
@@ -43,3 +45,22 @@ def visualize(X, P, d):
         ax = fig.add_subplot(111, projection='3d')
         ax.scatter(xCoords, yCoords, zCoords, c=colors, s=size, alpha=alpha)
         plt.show()
+
+def visualizeGraph(E, P, w = None):
+    G = nx.Graph()
+    G.add_nodes_from([i for i in range(E.columns)])
+
+    if not w:
+        w = [1 for _ in range(E.rows)]
+
+    for i in range(E.rows):
+        edge = E.colInd[E.rowPtr[i]:E.rowPtr[i + 1]]
+        G.add_edge(edge[0], edge[1], weight=w[i])
+
+    colors = [0 for _ in range(P.rows)]
+    for i in range(P.rows):
+        for k in range(P.rowPtr[i], P.rowPtr[i + 1]):
+            colors[i] = P.colInd[k]
+
+    nx.draw_networkx(G, with_labels = False, alpha = 0.6, node_color=colors)
+    plt.show()

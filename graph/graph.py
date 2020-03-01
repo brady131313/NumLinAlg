@@ -40,6 +40,14 @@ class Graph:
                     L.data[k] = - L.data[k]
 
         return L
+
+def isLaplacian(A):
+    for i in range(A.rows):
+        for j in range(A.columns):
+            if i != j and A.data[i][j] > 0:
+                return False
+
+    return True
     
 def randomWeights(E):
         data = [random.random() for _ in range(E.rows)]
@@ -116,6 +124,7 @@ def fromAdjacencyToEdge(A):
             j = A.colInd[k]
             entry = (i, j)
 
+            #BUG something breaks when [1] -> entry[1]
             if entry not in duplicates and entry[::-1] not in duplicates and entry[0] != [1]:
                 duplicates.add(entry)
                 entries.append(sorted(entry))
