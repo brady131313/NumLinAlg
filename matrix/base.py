@@ -1,7 +1,5 @@
 from abc import ABC, abstractmethod
 
-offset = 0
-
 class Base(ABC):
     def __init__(self, rows, columns):
         self.rows = rows

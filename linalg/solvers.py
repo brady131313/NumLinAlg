@@ -8,6 +8,69 @@ import graph
 from linalg.decomp import l1Smoother, diagonal
 import util
 
+def pcg(A, b, x, maxIter, tolerance, preconditioner, displayResidual):
+    if not isinstance(A, Sparse):
+        raise Exception("Matrix A must be sparse")
+    if A.rows != A.columns or A.columns != b.dim:
+        raise Exception(f"A must be SPD")
+    if A.columns != b.dim:
+        raise Exception(f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector b is {b.dim}x1")
+
+    r = b - A.multVec(x)
+    pr = preconditioner(r)
+
+    deltaInit = r.dot(pr)
+    delta = deltaInit
+
+    p = pr
+
+    for i in range(maxIter):
+        g = A.multVec(p)
+        alpha = delta / (p.dot(g))
+
+        x = x + p.scale(alpha)
+        r = r - g.scale(alpha)
+        pr = preconditioner(r)
+
+        deltaOld = delta
+        delta = r.dot(pr)
+
+        if displayResidual: print(delta)
+
+        if delta < (tolerance ** 2) * deltaInit:
+            break
+
+        beta = delta / deltaOld
+        p = pr + p.scale(beta)
+    
+    return [x, i, delta]
+
+def stationaryIterative(A, b, xInit, maxIter, tolerance, iterSolver, displayResidual):
+    if not isinstance(A, Sparse):
+        raise Exception("Matrix A must be sparse")
+
+    x = xInit
+    deltaInit = 0
+    delta = 9999
+
+    for k in range(maxIter):
+        r = b - A.multVec(x)
+        if k == 0:
+            deltaInit = r.norm()
+        
+        delta = r.norm()
+        if displayResidual:
+            print(delta)
+
+        z = iterSolver(r)
+        x = x + z
+
+        if delta < (tolerance * deltaInit):
+            break
+
+    accuracy = delta / deltaInit
+    return [x, k, delta, accuracy]
+
 def forward(A, b):
     if not isinstance(A, Dense):
         raise Exception("Matrix A must be dense")
@@ -99,56 +162,30 @@ def vectorSolver(a, b):
 
     return Vector(a.dim, data)
 
-class IterMatrix(Enum):
-    l1Smoother = 1
-    forwardGaussSeidel = 2
-    backwardGaussSeidel = 3
-    symmetricGaussSeidel = 4
+def l1Solver(A):
+    D = l1Smoother(A)
 
-def stationaryIterative(A, b, xInit, maxIter, tolerance, iterMatrix, displayResidual):
-    if not isinstance(A, Sparse):
-        raise Exception("Matrix A must be sparse")
+    def solver(r):
+        return vectorSolver(D, r)
+    return solver
 
-    x = xInit
-    deltaInit = 0
-    delta = 9999
+def fgsSolver(A):
+    def solver(r):
+        return forwardSparse(A, r)
+    return solver
 
-    if iterMatrix == IterMatrix.l1Smoother:
-        D = l1Smoother(A)
-    elif iterMatrix == IterMatrix.symmetricGaussSeidel:
-        D = diagonal(A) 
-    
+def bgsSolver(A):
+    def solver(r):
+        return backwardSparse(A, r)
+    return solver
 
-    for k in range(maxIter):
-        r = b - A.multVec(x)
-        if k == 0:
-            deltaInit = r.norm()
-        
-        delta = r.norm()
-        if displayResidual:
-            print(delta)
+def sgsSolver(A):
+    D = diagonal(A)
 
-        if iterMatrix == IterMatrix.l1Smoother:
-            z = vectorSolver(D, r)
-        elif iterMatrix == IterMatrix.forwardGaussSeidel:
-            z = forwardSparse(A, r)
-        elif iterMatrix == IterMatrix.backwardGaussSeidel:
-            z = backwardSparse(A, r)
-        elif iterMatrix == IterMatrix.symmetricGaussSeidel:
-            y = forwardSparse(A, r)
-            z = backwardSparse(A, D.elementWiseMult(y))
-
-        x = x + z
-
-        if delta < (tolerance * deltaInit):
-            print("Convergence")
-            print(f"Accuracy: {delta / deltaInit}")
-            return [x, k, delta]
-
-    print("Max iter reached")
-    print(f"Accuracy: {delta / deltaInit}")
-
-    return [x, maxIter, delta]
+    def solver(r):
+        y = forwardSparse(A, r)
+        return backwardSparse(A, D.elementWiseMult(y))
+    return solver
 
 def diagonalPreconditioner(A): 
     D = diagonal(A)
@@ -165,22 +202,14 @@ def sgsPreconditioner(A):
         return backwardSparse(A, D.elementWiseMult(y))
     return preconditioner
 
-def twolevelPreconditioner(A, method):
-    E = graph.fromAdjacencyToEdge(A)
-    w = graph.randomWeights(E)
+def twolevelPreconditioner(A, solver):
+    E, w = graph.fromAdjacencyToEdge(A, True)
 
     P = graph.lubys(E, w)
     coarse = graph.formCoarse(P, A)
-
-    if method == IterMatrix.l1Smoother:
-        D = l1Smoother(A)
     
     def preconditioner(r):
-        if method == IterMatrix.l1Smoother:
-            y = vectorSolver(D, r)
-        elif method == IterMatrix.forwardGaussSeidel:
-            y = forwardSparse(A, r)
-        else: raise Exception("M must be l1 or forward gauss seidel")
+        y = solver(r)
         
         rc = P.transpose().multVec(r - A.multVec(y))
         yc = _solveCoarse(coarse, rc)
@@ -198,40 +227,3 @@ def _solveCoarse(A, r):
 
     y = Vector(y.shape[0], list(y))
     return y
-
-def pcg(A, b, x, maxIter, tolerance, preconditioner, displayResidual):
-    if not isinstance(A, Sparse):
-        raise Exception("Matrix A must be sparse")
-    if A.rows != A.columns or A.columns != b.dim:
-        raise Exception(f"A must be SPD")
-    if A.columns != b.dim:
-        raise Exception(f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector b is {b.dim}x1")
-
-    r = b - A.multVec(x)
-    pr = preconditioner(r)
-
-    deltaInit = r.dot(pr)
-    delta = deltaInit
-
-    p = pr
-
-    for i in range(maxIter):
-        g = A.multVec(p)
-        alpha = delta / (p.dot(g))
-
-        x = x + p.scale(alpha)
-        r = r - g.scale(alpha)
-        pr = preconditioner(r)
-
-        deltaOld = delta
-        delta = r.dot(pr)
-
-        if displayResidual: print(delta)
-
-        if delta < (tolerance ** 2) * deltaInit:
-            return [x, i, delta]
-
-        beta = delta / deltaOld
-        p = pr + p.scale(beta)
-    
-    return [x, i, delta]

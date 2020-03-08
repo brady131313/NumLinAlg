@@ -1,11 +1,3 @@
-from scipy.sparse.linalg import eigsh
-from scipy.sparse import csr_matrix
-
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import cm
-
-import numpy as np
 import argparse
 import time
 
@@ -13,48 +5,41 @@ import util
 import plot
 from graph import Graph, getVertexAggregate, formCoarse, kMeans, QModularity
 
-def hw3(filename, K, d, maxIter, tolerance, p, G):
+def printGraph(g):
+    g.adjacency.visualizeShape()
+    g.edgeVertex.visualizeShape()
+    g.getVertexEdge().visualizeShape()
+    print(g.getDegree())
+    g.getEdgeEdge().visualizeShape()
+    print(g.getLaplacian())
+
+def hw3(filename, O, K, d, maxIter, tolerance, p, G):
     with open(util.getMatrixFile(filename)) as file:
-        g = Graph.fromFile(file)
+        g = Graph.fromFile(file, O)
 
-    #if K > g.adjacency.rows or d < K or d > g.adjacency.rows:
-    #    raise Exception("k << n, d >= k, d < n must hold")
-
-    if G:
-        g.adjacency.visualizeShape()
-        g.edgeVertex.visualizeShape()
-        g.getVertexEdge().visualizeShape()
-        print(g.getDegree())
-        g.getEdgeEdge().visualizeShape()
-        print(g.getLaplacian())
+    if G: printGraph(g)
 
     L = g.getLaplacian()
     X = plot.formCoordinateVectors(L, d)
 
-    clusters, iterations, delta = kMeans(X, K, d, maxIter, tolerance)
-    print(f"{iterations} iterations to find clusters")
+    P, iterations, delta, meta = kMeans(X, K, d, maxIter, tolerance)
+    coarse = formCoarse(P, L)
 
-    for i in range(len(clusters)):
-        print(f"|A{i + 1}| = {len(clusters[i])}")
-
-    start = time.time()
-    vertexAggregate = getVertexAggregate(X, clusters)
-    end = time.time()
-    print(f"Elapsed: {end - start}")
-
-    Q = QModularity(g.adjacency, vertexAggregate)
-    print(f"Q = {Q}")
-
-    coarse = formCoarse(vertexAggregate, L)
-
-    if d == 2 or d == 3:
-        plot.visualize(X, vertexAggregate, d)
-    else:
-        print("Can't display 4d :(")
+    convergence = "(Convergence)" if iterations != maxIter else ""
 
     if p:
-        vertexAggregate.visualizeShape()
+        P.visualizeShape()
         print(coarse)
+
+    print(f"\nIterations = {iterations} {convergence}")
+
+    for i in range(len(meta)):
+        print(f"|A{i + 1}| = {meta[i]}")
+    print()
+
+    if d == 2 or d == 3:
+        plot.visualize(X, P, d)
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("filename", help="matrix to be factored and solved", type=str)
@@ -64,10 +49,11 @@ parser.add_argument("-i", dest="maxIter", default=1000, action='store', type=int
 parser.add_argument("-t", dest="tolerance", default=1e-6, action='store', type=float, help="Tolerance needed for convergence")
 parser.add_argument("-p", dest="p", action='store_true', help="Display matricies")
 parser.add_argument("-G", dest="G", action='store_true', help="Display graphs")
+parser.add_argument("-O", dest="O", default=0, action='store', type=int, help="Offset for file")
 args = parser.parse_args()
 
 if not args.filename or len(args.filename) == 0:
-    print("Grahp filename must be supplied")
+    print("Graph filename must be supplied")
 else:
-    hw3(args.filename, args.K, args.d, args.maxIter, args.tolerance, args.p, args.G)
+    hw3(args.filename, args.O, args.K, args.d, args.maxIter, args.tolerance, args.p, args.G)
 

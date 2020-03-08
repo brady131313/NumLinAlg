@@ -48,7 +48,11 @@ def visualize(X, P, d):
 
 def visualizeGraph(E, P, w = None):
     G = nx.Graph()
-    G.add_nodes_from([i for i in range(E.columns)])
+
+    colors = []
+    for i in range(P.rows):
+        G.add_node(i)
+        colors.append(P.colInd[P.rowPtr[i]])
 
     if not w:
         w = [1 for _ in range(E.rows)]
@@ -57,10 +61,6 @@ def visualizeGraph(E, P, w = None):
         edge = E.colInd[E.rowPtr[i]:E.rowPtr[i + 1]]
         G.add_edge(edge[0], edge[1], weight=w[i])
 
-    colors = [0 for _ in range(P.rows)]
-    for i in range(P.rows):
-        for k in range(P.rowPtr[i], P.rowPtr[i + 1]):
-            colors[i] = P.colInd[k]
 
-    nx.draw_networkx(G, with_labels = False, alpha = 0.6, node_color=colors)
+    nx.draw_networkx(G, with_labels = False, node_size=200, alpha = 0.6, node_color=colors)
     plt.show()

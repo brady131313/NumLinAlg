@@ -8,15 +8,10 @@ from graph.graph import *
 import plot
 
 def main():
-    with open(util.getMatrixFile("500.mtx")) as file:
-        g = Graph.fromFile(file)
+    with open(util.getMatrixFile("25.mtx")) as file:
+        A = Sparse.fromFile(file)
     
-    As, Ps = recursiveLouvains(g)
-    Pk = formVertexToK1Aggregate(Ps, len(Ps))
-    Pk.visualizeShape()
-    print(Pk.columns)
-    
-    plot.visualizeGraph(g.edgeVertex, Pk)
+    A.visualizeShape()
     
 
 if __name__ == '__main__':

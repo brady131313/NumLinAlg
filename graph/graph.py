@@ -2,7 +2,7 @@ from operator import itemgetter
 import numpy as np
 import random
 
-from matrix import Sparse, Vector, offset
+from matrix import Sparse, Vector
 from linalg import l1Smoother
 
 class Graph:
@@ -11,12 +11,12 @@ class Graph:
         self.edgeVertex = edgeVertex
 
     @classmethod
-    def fromFile(cls, file):
-        adjacency = Sparse.fromFile(file, True, True)
+    def fromFile(cls, file, offset = 0):
+        adjacency = Sparse.fromFile(file, offset, True, True)
 
         #Go back to beginning of file
         file.seek(0)
-        edgeVertex = fromFileToEdge(file)
+        edgeVertex = fromFileToEdge(file, offset)
 
         return cls(adjacency, edgeVertex)
 
@@ -138,7 +138,7 @@ def fromAdjacencyToEdge(A, rand):
 
     return [_processEntries(len(entries), A.columns, entries), Vector(len(w), w)]
 
-def fromFileToEdge(file):
+def fromFileToEdge(file, offset = 0):
     data = []
     colInd = []
     rowPtr = []

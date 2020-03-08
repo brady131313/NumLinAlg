@@ -1,4 +1,4 @@
-from matrix.base import Base, offset
+from matrix.base import Base
 from matrix.vector import Vector
 
 class Sparse(Base):
@@ -21,7 +21,7 @@ class Sparse(Base):
             self.rowPtr = [0]
 
     @classmethod
-    def fromFile(cls, file, relation = False, graph = False):
+    def fromFile(cls, file, offset = 0, relation = False, graph = False):
         data = []
         colInd = []
         rowPtr = [0]

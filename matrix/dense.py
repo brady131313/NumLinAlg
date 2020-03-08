@@ -1,4 +1,4 @@
-from matrix.base import Base, offset
+from matrix.base import Base
 
 
 class Dense(Base):
@@ -13,7 +13,7 @@ class Dense(Base):
             self.data = [[0.0] * self.columns for i in range(self.rows)]
     
     @classmethod
-    def fromFile(cls, file, relation = False):
+    def fromFile(cls, file, offset = 0, relation = False):
         entry = []
         binary = False
         checked = False
