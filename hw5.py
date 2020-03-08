@@ -44,8 +44,8 @@ def hw5(filename, O, maxIter, tolerance, preconditioner, M, display, displayResi
         util.compareVectors(x, xResult)
 
     print(f"\nPreconditioner   = {method}")
-    print(f"Iterations = {iterations} {convergence}")
-    print(f"Residual   = {residual}")
+    print(f"Iterations       = {iterations} {convergence}")
+    print(f"Residual         = {residual}")
     print(f"Time to solve was {end - start}\n")
 
 
