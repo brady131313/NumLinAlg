@@ -4,6 +4,7 @@ import time
 
 from matrix import Vector, Dense
 from graph import *
+import util
 
 def QModularity(A, P):
     degree = [0 for _ in range(A.rows)]

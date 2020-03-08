@@ -1,4 +1,6 @@
 import os
+import time
+import functools
 
 def getMatrixFile(name):
     scriptDir = os.path.dirname(__file__)
@@ -20,3 +22,15 @@ def checkLowerTriangular(A):
                 return
     
     print("Lower triangular")
+
+def timer(func):
+    @functools.wraps(func)
+    def wrapper_timer(*args, **kwargs):
+        start = time.perf_counter()
+        value = func(*args, **kwargs)
+        end = time.perf_counter()
+        elapsed = end - start
+
+        print(f"Finished {func.__name__!r} in {elapsed:.4f} seconds")
+        return value
+    return wrapper_timer
