@@ -8,13 +8,46 @@ import graph
 from linalg.decomp import l1Smoother, diagonal
 import util
 
+
+def composite(A, b, x, components, residual):
+    if not isinstance(A, Sparse):
+        raise Exception("Matrix A must be sparse")
+    if A.rows != A.columns:
+        raise Exception(f"A must be SPD")
+    if A.columns != b.dim:
+        raise Exception(
+            f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector b is {b.dim}x1")
+
+    r = b - A.multVec(x)
+    delta = r.norm()
+
+    for component in components:
+        y = component(r)
+        x = x + y
+        r = r - A.multVec(y)
+        if residual:
+            delta = r.norm()
+            print(delta)
+
+    for component in reversed(components):
+        y = component(r)
+        x = x + y
+        r = r - A.multVec(y)
+        if residual:
+            delta = r.norm()
+            print(delta)
+
+    return [x, delta]
+
+
 def pcg(A, b, x, maxIter, tolerance, preconditioner, displayResidual):
     if not isinstance(A, Sparse):
         raise Exception("Matrix A must be sparse")
     if A.rows != A.columns or A.columns != b.dim:
         raise Exception(f"A must be SPD")
     if A.columns != b.dim:
-        raise Exception(f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector b is {b.dim}x1")
+        raise Exception(
+            f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector b is {b.dim}x1")
 
     r = b - A.multVec(x)
     pr = preconditioner(r)
@@ -35,15 +68,17 @@ def pcg(A, b, x, maxIter, tolerance, preconditioner, displayResidual):
         deltaOld = delta
         delta = r.dot(pr)
 
-        if displayResidual: print(delta)
+        if displayResidual:
+            print(delta)
 
         if delta < (tolerance ** 2) * deltaInit:
             break
 
         beta = delta / deltaOld
         p = pr + p.scale(beta)
-    
+
     return [x, i, delta]
+
 
 def stationaryIterative(A, b, xInit, maxIter, tolerance, iterSolver, displayResidual):
     if not isinstance(A, Sparse):
@@ -57,7 +92,7 @@ def stationaryIterative(A, b, xInit, maxIter, tolerance, iterSolver, displayResi
         r = b - A.multVec(x)
         if k == 0:
             deltaInit = r.norm()
-        
+
         delta = r.norm()
         if displayResidual:
             print(delta)
@@ -71,11 +106,13 @@ def stationaryIterative(A, b, xInit, maxIter, tolerance, iterSolver, displayResi
     accuracy = delta / deltaInit
     return [x, k, delta, accuracy]
 
+
 def forward(A, b):
     if not isinstance(A, Dense):
         raise Exception("Matrix A must be dense")
     if A.rows != b.dim:
-        raise Exception(f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector is {b.dim}x1")
+        raise Exception(
+            f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector is {b.dim}x1")
 
     data = [0] * A.rows
     for i in range(A.rows):
@@ -83,16 +120,18 @@ def forward(A, b):
 
         for j in range(i):
             data[i] = data[i] - (A.data[i][j] * data[j])
-        
+
         data[i] = data[i] / A.data[i][i]
-    
+
     return Vector(A.rows, data)
+
 
 def forwardSparse(A, b):
     if not isinstance(A, Sparse):
         raise Exception("Matrix A must be sparse")
     if A.rows != b.dim:
-        raise Exception(f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector is {b.dim}x1")
+        raise Exception(
+            f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector is {b.dim}x1")
 
     data = [0] * A.rows
     for i in range(A.rows):
@@ -108,13 +147,15 @@ def forwardSparse(A, b):
 
         data[i] = data[i] / diagonal
 
-    return Vector(A.rows, data) 
+    return Vector(A.rows, data)
+
 
 def backward(A, b):
     if not isinstance(A, Dense):
         raise Exception("Matrix A must be dense")
     if A.rows != b.dim:
-        raise Exception(f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector is {b.dim}x1")
+        raise Exception(
+            f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector is {b.dim}x1")
 
     data = [0] * A.rows
     for i in range(A.rows - 1, -1, -1):
@@ -127,12 +168,14 @@ def backward(A, b):
 
     return Vector(A.rows, data)
 
+
 def backwardSparse(A, b):
     if not isinstance(A, Sparse):
         raise Exception("Matrix A must be sparse")
     if A.rows != b.dim:
-        raise Exception(f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector is {b.dim}x1")
-    
+        raise Exception(
+            f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector is {b.dim}x1")
+
     data = [0] * A.rows
     for i in range(A.rows - 1, -1, -1):
         data[i] = b.data[i]
@@ -146,8 +189,9 @@ def backwardSparse(A, b):
                 data[i] = data[i] - (A.data[k] * data[j])
 
         data[i] = data[i] / diagonal
-    
+
     return Vector(A.rows, data)
+
 
 def vectorSolver(a, b):
     if a.dim != b.dim:
@@ -162,6 +206,7 @@ def vectorSolver(a, b):
 
     return Vector(a.dim, data)
 
+
 def l1Solver(A):
     D = l1Smoother(A)
 
@@ -169,15 +214,18 @@ def l1Solver(A):
         return vectorSolver(D, r)
     return solver
 
+
 def fgsSolver(A):
     def solver(r):
         return forwardSparse(A, r)
     return solver
 
+
 def bgsSolver(A):
     def solver(r):
         return backwardSparse(A, r)
     return solver
+
 
 def sgsSolver(A):
     D = diagonal(A)
@@ -187,12 +235,14 @@ def sgsSolver(A):
         return backwardSparse(A, D.elementWiseMult(y))
     return solver
 
-def diagonalPreconditioner(A): 
+
+def diagonalPreconditioner(A):
     D = diagonal(A)
 
     def preconditioner(r):
-        return vectorSolver(D, r) 
+        return vectorSolver(D, r)
     return preconditioner
+
 
 def sgsPreconditioner(A):
     D = diagonal(A)
@@ -202,15 +252,16 @@ def sgsPreconditioner(A):
         return backwardSparse(A, D.elementWiseMult(y))
     return preconditioner
 
+
 def twolevelPreconditioner(A, solver):
     E, w = graph.fromAdjacencyToEdge(A, True)
 
     P = graph.lubys(E, w)
     coarse = graph.formCoarse(P, A)
-    
+
     def preconditioner(r):
         y = solver(r)
-        
+
         rc = P.transpose().multVec(r - A.multVec(y))
         yc = _solveCoarse(coarse, rc)
 
@@ -219,8 +270,10 @@ def twolevelPreconditioner(A, solver):
         return y + z
     return preconditioner
 
+
 def _solveCoarse(A, r):
-    converted = csr_matrix((A.data, A.colInd, A.rowPtr), (A.rows, A.columns)).asfptype()
+    converted = csr_matrix((A.data, A.colInd, A.rowPtr),
+                           (A.rows, A.columns)).asfptype()
 
     B = splu(converted.tocsc())
     y = B.solve(np.array(r.data))
