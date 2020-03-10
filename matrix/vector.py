@@ -23,6 +23,17 @@ class Vector:
         
         return cls(dim, data)
 
+    @classmethod
+    def fromRandomn(cls, dim):
+        if dim <= 0:
+            raise Exception("Dimension must be greater than 0")
+
+        data = [0] * dim
+        for i in range(dim):
+            data[i] = random.random()
+
+        return cls(dim, data)
+
     def __add__(self, other):
         if self.dim != other.dim:
             raise Exception(f"Dimension mismatch: {self.dim} != {other.dim}")

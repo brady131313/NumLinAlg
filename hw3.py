@@ -2,8 +2,9 @@ import argparse
 import time
 
 import util
-import plot
 from graph import Graph, getVertexAggregate, formCoarse, kMeans, QModularity
+import plot
+
 
 def printGraph(g):
     g.adjacency.visualizeShape()
@@ -12,6 +13,7 @@ def printGraph(g):
     print(g.getDegree())
     g.getEdgeEdge().visualizeShape()
     print(g.getLaplacian())
+
 
 def hw3(filename, O, K, d, maxIter, tolerance, p, G):
     with open(util.getMatrixFile(filename)) as file:
@@ -56,4 +58,3 @@ if not args.filename or len(args.filename) == 0:
     print("Graph filename must be supplied")
 else:
     hw3(args.filename, args.O, args.K, args.d, args.maxIter, args.tolerance, args.p, args.G)
-

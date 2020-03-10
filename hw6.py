@@ -1,51 +1,38 @@
-import time
 import argparse
+import time
 
 import util
+from linalg import composite, l1Solver, fgsSolver, bgsSolver, sgsSolver, constructW
 from matrix import Sparse, Vector
-from linalg import composite, l1Solver, fgsSolver, bgsSolver, sgsSolver
+from graph import Graph, kMeans
+import plot
 
 
-def hw6(filename, O, display, residual):
+def hw6(filename, O, K, m, maxIter, tolerance, p):
     with open(util.getMatrixFile(filename)) as file:
-        A = Sparse.fromFile(file, O)
+        G = Graph.fromFile(file, O)
 
-    # Generate random solution vector
-    x = Vector.fromRandom(A.columns, 0, 5)
-    b = A.multVec(x)
-
-    # Generate first iteration
-    xInit = Vector(A.columns)
-
-    # Convergent composite iterative methods
-    components = [l1Solver, fgsSolver, bgsSolver, sgsSolver]
-    methods = [f.__name__ for f in components]
-    components = [f(A) for f in components]
-
-    start = time.time()
-    xResult, residual = composite(A, b, xInit, components, residual)
-    end = time.time()
-
-    if display:
-        print()
-        util.compareVectors(x, xResult)
-
-    print(f"\nConvergent methods = {methods}")
-    print(f"Residual           = {residual}")
-    print(f"Time to solve was {end - start}\n")
+    L = G.getLaplacian()
+    W = constructW(L, m)
+    
+    P, iterations, delta, meta = kMeans(W, K, m, maxIter, tolerance)
+    
+    if m == 2 or m == 3:
+        plot.visualize(W, P, 2)
+    
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("filename", help="Matrix to be solved", type=str)
-parser.add_argument("-O", dest="offset", default=0,
-                    action='store', type=int, help="Offset for matrix file")
-parser.add_argument("-d", dest="display",
-                    action='store_true', help="Display result")
-parser.add_argument("-r", dest="residual", action='store_true',
-                    help="Display residual each iteration")
+parser.add_argument("filename", help="matrix to be factored and solved", type=str)
+parser.add_argument("-m", dest="m", default=2, action='store', type=int, help="Dimensions")
+parser.add_argument("-K", dest="K", default=2, action='store', type=int, help="Partitions")
+parser.add_argument("-i", dest="maxIter", default=1000, action='store', type=int, help="Max number of iterations")
+parser.add_argument("-t", dest="tolerance", default=1e-6, action='store', type=float, help="Tolerance needed for convergence")
+parser.add_argument("-p", dest="p", action='store_true', help="Display matricies")
+parser.add_argument("-O", dest="O", default=0, action='store', type=int, help="Offset for file")
 args = parser.parse_args()
 
 if not args.filename or len(args.filename) == 0:
     print("Matrix filename must be supplied")
 else:
-    hw6(args.filename, args.offset, args.display, args.residual)
+    hw6(args.filename, args.O, args.K, args.m, args.maxIter, args.tolerance, args.p)

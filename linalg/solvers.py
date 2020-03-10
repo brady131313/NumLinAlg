@@ -1,43 +1,76 @@
-from enum import Enum
+import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.sparse.linalg import splu
-import numpy as np
 
-from matrix import Dense, Sparse, Vector
 import graph
 from linalg.decomp import l1Smoother, diagonal
-import util
+from matrix import Dense, Sparse, Vector
 
 
-def composite(A, b, x, components, residual):
-    if not isinstance(A, Sparse):
-        raise Exception("Matrix A must be sparse")
-    if A.rows != A.columns:
-        raise Exception(f"A must be SPD")
-    if A.columns != b.dim:
-        raise Exception(
-            f"Dimension mismatch, matrix is {A.rows}x{A.columns}, vector b is {b.dim}x1")
+def constructW(A, m):
+    if m <= 0:
+        raise Exception("M must be >= 1")
 
-    r = b - A.multVec(x)
-    delta = r.norm()
+    components = []
+    W = np.zeros((A.rows, m))
 
-    for component in components:
-        y = component(r)
-        x = x + y
-        r = r - A.multVec(y)
-        if residual:
-            delta = r.norm()
-            print(delta)
+    for i in range(m):
+        component, w = constructComponent(A, components)
 
-    for component in reversed(components):
-        y = component(r)
-        x = x + y
-        r = r - A.multVec(y)
-        if residual:
-            delta = r.norm()
-            print(delta)
+        W[:, i] = w.data
+        components.append(component)
 
-    return [x, delta]
+    return W
+
+
+def constructComponent(A, components = []):
+    if len(components) == 0:
+        components = [l1Solver(A)]
+    
+    b = Vector(A.columns)
+    xInit = Vector(A.columns)
+    x = Vector.fromRandomn(A.columns)
+
+    compositor = composite(A, xInit, components)
+    for i in range(10):
+        x = x + compositor(b)
+
+    w = x.scale(1 / x.norm())    
+    component = _formComponent(A, w)
+
+    return component, w
+
+def _formComponent(A, w):
+    ABar = _scaleAdjacency(A, w)
+    E, weights = graph.fromAdjacencyToEdge(ABar, False)
+
+    PBar = graph.lubys(E, weights)
+    P = _scaleAggregate(PBar, w)
+    
+    solver = fgsSolver(A)
+    return twolevelPreconditioner(A, solver, P)
+
+def _scaleAggregate(P, w):
+    data = [0] * len(P.data)
+
+    for i in range(P.rows):
+        k = P.rowPtr[i]
+        data[k] = P.data[k] * w.data[i]
+    return Sparse(P.rows, P.columns, data, P.colInd, P.rowPtr)
+
+
+def _scaleAdjacency(A, w):
+    data = [0.0] * len(A.data)
+
+    for i in range(A.rows):
+        for k in range(A.rowPtr[i], A.rowPtr[i + 1]):
+            j = A.colInd[k]
+
+            if i != j:
+                data[k] = A.data[k] * (-1 * w.data[i]) * w.data[j]
+            else:
+                data[k] = A.data[k]
+    return Sparse(A.rows, A.columns, data, A.colInd, A.rowPtr)
 
 
 def pcg(A, b, x, maxIter, tolerance, preconditioner, displayResidual):
@@ -207,23 +240,44 @@ def vectorSolver(a, b):
     return Vector(a.dim, data)
 
 
+def composite(A, xvec, components):
+    def solver(b):
+        x = xvec
+        r = b - A.multVec(x)
+
+        for component in components:
+            y = component(r)
+            x = x + y
+            r = r - A.multVec(y)
+
+        for component in reversed(components):
+            y = component(r)
+            x = x + y
+            r = r - A.multVec(y)
+        return x
+    return solver
+
+
 def l1Solver(A):
     D = l1Smoother(A)
 
     def solver(r):
         return vectorSolver(D, r)
+
     return solver
 
 
 def fgsSolver(A):
     def solver(r):
         return forwardSparse(A, r)
+
     return solver
 
 
 def bgsSolver(A):
     def solver(r):
         return backwardSparse(A, r)
+
     return solver
 
 
@@ -233,6 +287,7 @@ def sgsSolver(A):
     def solver(r):
         y = forwardSparse(A, r)
         return backwardSparse(A, D.elementWiseMult(y))
+
     return solver
 
 
@@ -241,6 +296,7 @@ def diagonalPreconditioner(A):
 
     def preconditioner(r):
         return vectorSolver(D, r)
+
     return preconditioner
 
 
@@ -250,13 +306,15 @@ def sgsPreconditioner(A):
     def preconditioner(r):
         y = forwardSparse(A, r)
         return backwardSparse(A, D.elementWiseMult(y))
+
     return preconditioner
 
 
-def twolevelPreconditioner(A, solver):
+def twolevelPreconditioner(A, solver, P = None):
     E, w = graph.fromAdjacencyToEdge(A, True)
 
-    P = graph.lubys(E, w)
+    if P == None:
+        P = graph.lubys(E, w)
     coarse = graph.formCoarse(P, A)
 
     def preconditioner(r):
@@ -268,6 +326,7 @@ def twolevelPreconditioner(A, solver):
         y = y + P.multVec(yc)
         z = backwardSparse(A, r - A.multVec(y))
         return y + z
+
     return preconditioner
 
 

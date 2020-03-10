@@ -5,6 +5,7 @@ from graph import lubys, recursiveLubys, QModularity, modularityMatrix
 import util
 import plot
 
+
 def single(filename, O, modularity, printResult, visualize):
     with open(util.getMatrixFile(filename)) as file:
         g = Graph.fromFile(file, O)
@@ -28,6 +29,7 @@ def single(filename, O, modularity, printResult, visualize):
     if visualize:
         plot.visualizeGraph(g.edgeVertex, P, w.data)
 
+
 def recursive(filename, O, tau, modularity, printResult, visualize):
     with open(util.getMatrixFile(filename)) as file:
         g = Graph.fromFile(file, O)
@@ -36,7 +38,6 @@ def recursive(filename, O, tau, modularity, printResult, visualize):
 
     Pk = formVertexToK1Aggregate(Ps, len(Ps))
     Q = QModularity(As[0], Pk)
-
 
     if printResult:
         Pk.visualizeShape()
